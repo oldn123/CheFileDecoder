@@ -9,17 +9,27 @@ struct CListCtrl_DataRecord
 	{}
 
 	CListCtrl_DataRecord(
-	CString	m_sNumber,		//序号
-	CString	m_sliveTime,	//保留时间
-	CString	m_sTopSqrt,		//峰面积
-	CString	m_sTopSqrtPer,	//峰面积比
-	CString	m_sTopHVal,		//峰高
-	CString	m_sTopWVal,		//峰宽
-	CString m_sGroupName,	//组名
-	CString m_sContentsVal,	//含量
-	CString m_sTopStype		//峰形
+	CString	sNumber,		//序号
+	CString	sliveTime,	//保留时间
+	CString	sTopSqrt,		//峰面积
+	CString	sTopSqrtPer,	//峰面积比
+	CString	sTopHVal,		//峰高
+	CString	sTopWVal,		//峰宽
+	CString sGroupName,	//组名
+	CString sContentsVal,	//含量
+	CString sTopStype		//峰形
 	)
-	{}
+	{
+		m_sNumber		= sNumber;		//序号
+		m_sliveTime		= sliveTime;	//保留时间
+		m_sTopSqrt		= sTopSqrt;		//峰面积
+		m_sTopSqrtPer	= sTopSqrtPer;	//峰面积比
+		m_sTopHVal		= sTopHVal;		//峰高
+		m_sTopWVal		= sTopWVal;		//峰宽
+		m_sGroupName	= sGroupName;	//组名
+		m_sContentsVal	= sContentsVal;	//含量
+		m_sTopStype		= sTopStype;	//峰形
+	}
 
 	CString	m_sNumber;		//序号
 	CString	m_sliveTime;	//保留时间

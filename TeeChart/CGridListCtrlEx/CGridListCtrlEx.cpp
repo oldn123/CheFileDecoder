@@ -946,7 +946,7 @@ const CHeaderCtrl* CGridListCtrlEx::GetHeaderCtrl() const
 //------------------------------------------------------------------------
 //! Retrieves the number of columns from the header control.
 //!
-//! @return Number of header control items if successful; otherwise – 1.
+//! @return Number of header control items if successful; otherwise ?1.
 //------------------------------------------------------------------------
 int CGridListCtrlEx::GetColumnCount() const
 {

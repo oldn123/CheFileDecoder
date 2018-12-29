@@ -93,9 +93,15 @@ public:
 	CCheFileData(void);
 	~CCheFileData(void);
 
-	bool OpenFile(LPCTSTR);
+	bool LoadFile(LPCTSTR);
+
+	bool SaveFile();
+	bool SaveFile(LPCTSTR);
+
+	sCheData * GetData(){return &m_sCheData;}
 
 protected:
 	sCheData	m_sCheData;
+	CString		m_strInputfile;
 };
 

@@ -11,7 +11,17 @@ CCheFileData::~CCheFileData(void)
 {
 }
 
-bool CCheFileData::OpenFile(LPCTSTR sInput)
+bool CCheFileData::SaveFile()
+{
+	return true;
+}
+
+bool CCheFileData::SaveFile(LPCTSTR)
+{
+	return true;
+}
+
+bool CCheFileData::LoadFile(LPCTSTR sInput)
 {
 	USES_CONVERSION;
 	FILE * fp = fopen(CT2A((LPCTSTR)sInput), "rb");
@@ -138,4 +148,9 @@ bool CCheFileData::OpenFile(LPCTSTR sInput)
 
 
 	fclose(fp);
+
+
+	m_strInputfile = sInput;
+
+	return true;
 }
