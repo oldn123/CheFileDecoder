@@ -193,14 +193,38 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				fread(&wNameCnt, 1, 2, fp);	//总量
 				
 				char sName[200] = {0};
-				fread(sName, 1, wNameCnt + 1, fp);
+				fread(sName, 1, wNameCnt, fp);
+				sName[wNameCnt] = 0;
 
 				sItem.sGroupName = A2T(sName);
 
-				char sTmp[0x3B] = {0};
-				fread(sTmp, 1, 0x3B, fp);
+				char sTmp[0x3C] = {0};
+				fread(sTmp, 1, 0x3C, fp);
 
-				sItem.fContentsVal = *(float*)&sTmp[0x0B];
+				sItem.fLiveTime = *(float*)&sTmp[0x08];		//保留时间
+				
+				sItem.fContentsVal = *(float*)&sTmp[0x0C];	
+
+				sItem.fLivePower = *(float*)&sTmp[0x1C];	//保留时间对应的电压
+				sItem.nIdx1 = *(int*)&sTmp[0x28];	//	
+				sItem.nIdx2 = *(int*)&sTmp[0x2C];	//
+
+				assert(sItem.nIdx1 == sItem.nIdx2);
+
+				sItem.fUnKonw1 = *(float*)&sTmp[0x00];
+				sItem.fUnKonw2 = *(float*)&sTmp[0x04];
+				sItem.fUnKonw3 = *(float*)&sTmp[0x10];
+				sItem.fUnKonw4 = *(float*)&sTmp[0x14];
+				sItem.fUnKonw5 = *(float*)&sTmp[0x18];
+				sItem.fUnKonw6 = *(float*)&sTmp[0x20];
+				sItem.fUnKonw7 = *(float*)&sTmp[0x24];
+
+				sItem.dwUnkown1= *(DWORD*)&sTmp[0x30];		//0
+				sItem.dwUnkown2= *(DWORD*)&sTmp[0x34];		//-1
+				assert(sItem.dwUnkown1 == 0);
+				assert(sItem.dwUnkown2 == 0xffffffff);
+
+				sItem.fUnKonw8 = *(float*)&sTmp[0x38];
 				m_sCheData.sJgData.verItems.push_back(sItem);
 			}
 		}

@@ -47,7 +47,23 @@ struct sItemData2
 struct sJfItem3
 {
 	CString sGroupName;
-	float fContentsVal;
+	float fContentsVal;	//含量
+	float fLiveTime;	//保留时间
+	float fLivePower;	//保留时间对应的电压
+	int   nIdx1;
+	int   nIdx2;
+
+	float fUnKonw1;
+	float fUnKonw2;
+	float fUnKonw3;
+	float fUnKonw4;
+	float fUnKonw5;
+	float fUnKonw6;
+	float fUnKonw7;
+	float fUnKonw8;
+
+	DWORD dwUnkown1;		//0
+	DWORD dwUnkown2;		//-1
 };
 
 struct sItemData3
