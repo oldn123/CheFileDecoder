@@ -4,6 +4,7 @@
 
 CCheFileData::CCheFileData(void)
 {
+	Clear();
 }
 
 
@@ -21,6 +22,38 @@ bool CCheFileData::SaveFile(LPCTSTR)
 	return true;
 }
 
+void CCheFileData::Clear()
+{
+	memset(&m_sCheData.sVer[0], 0, 0x22);
+	m_sCheData.nDataCnt = 0;
+	m_sCheData.nYLimit  = 0;
+	m_sCheData.nUnKnowVal1 = 0;
+	m_sCheData.verMainDatas.clear();
+	memset(&m_sCheData.bufUnKnow1[0], 0, 0x2E);
+	m_sCheData.dtOle1 = 0;
+	m_sCheData.dtOle2 = 0;
+	m_sCheData.nUnKnowVal2 = 0;
+	m_sCheData.dtOle3 = 0;
+	m_sCheData.dtOle4 = 0; 
+
+	m_sCheData.sJfData.nItemCnt = 0;
+	m_sCheData.sJfData.wType = 0;
+	m_sCheData.sJfData.wItemCnt = 0;
+	m_sCheData.sJfData.verItems.clear();
+
+	m_sCheData.sJfData2.nItemCnt = 0;
+	m_sCheData.sJfData2.wType = 0;
+	m_sCheData.sJfData2.wItemCnt = 0;
+	m_sCheData.sJfData2.verItems.clear();
+
+	m_sCheData.sJgData.nItemCnt = 0;
+	m_sCheData.sJgData.wType = 0;
+	m_sCheData.sJgData.wItemCnt = 0;
+	m_sCheData.sJgData.verItems.clear();
+
+	m_sCheData.fTopSqrtTotal = 0;
+}
+
 bool CCheFileData::LoadFile(LPCTSTR sInput)
 {
 	USES_CONVERSION;
@@ -30,7 +63,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 	{
 		return false;
 	}
-
+	Clear();
 	do 
 	{
 		{
@@ -97,7 +130,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				si.fTimeTo = *(float*)(&pJfDatas[i * 0x12] + 4);
 				si.fPowerFrom = *(float*)(&pJfDatas[i * 0x12] + 8);
 				si.fPowerTo = *(float*)(&pJfDatas[i * 0x12] + 0x0C);
-				si.wUnKnow = *(float*)(&pJfDatas[i * 0x12] + 0x10);
+				si.wUnKnow = *(WORD*)(&pJfDatas[i * 0x12] + 0x10);
 
 				assert(si.wUnKnow == 0);
 
@@ -115,7 +148,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 			m_sCheData.sJfData2.wType = *(WORD*)&pJfDatas2[0];
 			m_sCheData.sJfData2.wItemCnt = *(WORD*)&pJfDatas2[2];
 			m_sCheData.sJfData2.nItemCnt = *(WORD*)&pJfDatas2[4];
-
+			m_sCheData.fTopSqrtTotal = 0;
 			for(int i = 0; i < m_sCheData.sJfData2.nItemCnt; i++)
 			{
 				int nItemFrom = 8 + i * 0x2C;
@@ -135,13 +168,42 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 
 				assert(si.dwUnknow8 == 0);
 
+				m_sCheData.fTopSqrtTotal += si.nTopSqrt;
 				m_sCheData.sJfData2.verItems.push_back(si);
 			}
 
 			delete [] pJfDatas2;
 		}
 
+		{
+			char buf[0x12] = {0};
+			char * pBuf = &buf[0];
 
+			fread(pBuf, 1, 0x12, fp);	//总量
+
+			m_sCheData.sJgData.wType = *(WORD*)&pBuf[0];
+			m_sCheData.sJgData.wItemCnt = *(WORD*)&pBuf[2];
+			m_sCheData.sJgData.nItemCnt = *(WORD*)&pBuf[4];
+			
+			USES_CONVERSION;
+			for (int i = 0; i < m_sCheData.sJgData.nItemCnt; i++)
+			{
+				sJfItem3 sItem;
+				WORD wNameCnt = 0;
+				fread(&wNameCnt, 1, 2, fp);	//总量
+				
+				char sName[200] = {0};
+				fread(sName, 1, wNameCnt + 1, fp);
+
+				sItem.sGroupName = A2T(sName);
+
+				char sTmp[0x3B] = {0};
+				fread(sTmp, 1, 0x3B, fp);
+
+				sItem.fContentsVal = *(float*)&sTmp[0x0B];
+				m_sCheData.sJgData.verItems.push_back(sItem);
+			}
+		}
 
 	} while (false);
 

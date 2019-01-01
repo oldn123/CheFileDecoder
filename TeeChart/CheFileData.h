@@ -46,18 +46,8 @@ struct sItemData2
 
 struct sJfItem3
 {
-	WORD wUnKnow1;
-	DWORD dwUnknow1;
-	DWORD dwUnknow2;
-	DWORD dwUnknow3;
-	DWORD dwUnknow4;
-	DWORD dwUnknow5;
-	DWORD dwUnknow6;
-	DWORD dwUnknow7;
-	int	  nTopSqrt;
-	int	  nTopHVal;
-	WORD  nIdx;
-	DWORD dwUnknow8;		// =0
+	CString sGroupName;
+	float fContentsVal;
 };
 
 struct sItemData3
@@ -85,6 +75,9 @@ struct sCheData
 	sItemData	sJfData;
 	sItemData2	sJfData2;
 	sItemData3  sJgData;	//结果数据
+
+	//
+	float fTopSqrtTotal;
 };
 
 class CCheFileData
@@ -99,6 +92,9 @@ public:
 	bool SaveFile(LPCTSTR);
 
 	sCheData * GetData(){return &m_sCheData;}
+
+protected:
+	void Clear();
 
 protected:
 	sCheData	m_sCheData;

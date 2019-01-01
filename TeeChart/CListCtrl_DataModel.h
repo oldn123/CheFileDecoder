@@ -109,15 +109,7 @@ public:
 		return m_Records.at(lookupId).GetCellText(col, false);
 	}
 
-// 	vector<CString> GetCountries() const
-// 	{
-// 		vector<CString> countries;
-// 		for(size_t rowId = 0 ; rowId < m_Records.size(); ++rowId)
-// 			countries.push_back( m_Records[rowId].m_Country );
-// 		sort(countries.begin(), countries.end());
-// 		countries.erase(unique(countries.begin(), countries.end()), countries.end());
-// 		return countries;
-// 	}
+	void Clear(){m_Records.clear();}
 
 	int AddItem(
 		CString	sNumber,		//ÐòºÅ
