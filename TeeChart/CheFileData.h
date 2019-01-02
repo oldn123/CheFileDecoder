@@ -78,9 +78,9 @@ struct sCheData
 {
 	char sVer[0x22];
 	int nDataCnt;
-	int nYLimit;
-	int nUnKnowVal1;
-	vector<DWORD>	verMainDatas;
+	int nYLimit_High;
+	int nYLimit_Low;
+	vector<float>	verMainDatas;
 	char bufUnKnow1[0x2E];
 	DATE dtOle1;
 	DATE dtOle2;

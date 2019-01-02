@@ -26,8 +26,8 @@ void CCheFileData::Clear()
 {
 	memset(&m_sCheData.sVer[0], 0, 0x22);
 	m_sCheData.nDataCnt = 0;
-	m_sCheData.nYLimit  = 0;
-	m_sCheData.nUnKnowVal1 = 0;
+	m_sCheData.nYLimit_High  = 0;
+	m_sCheData.nYLimit_Low = 0;
 	m_sCheData.verMainDatas.clear();
 	memset(&m_sCheData.bufUnKnow1[0], 0, 0x2E);
 	m_sCheData.dtOle1 = 0;
@@ -78,17 +78,19 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 			}
 
 			m_sCheData.nDataCnt = *(int*)&sBuf[0x22];
-			m_sCheData.nYLimit = *(int*)&sBuf[0x26];
-			m_sCheData.nUnKnowVal1 = *(int*)&sBuf[0x2A];
+			m_sCheData.nYLimit_High = *(int*)&sBuf[0x26];
+			m_sCheData.nYLimit_Low = *(int*)&sBuf[0x2A];
 		}
 
+		float ftotal = 0;
 		if (m_sCheData.nDataCnt > 0)
 		{
-			DWORD * sDataBuf = new DWORD[m_sCheData.nDataCnt];
+			float * sDataBuf = new float[m_sCheData.nDataCnt];
 			fread(sDataBuf, 4, m_sCheData.nDataCnt, fp);
 
 			for (int i = 0; i < m_sCheData.nDataCnt; i++)
 			{
+				ftotal += sDataBuf[i];
 				m_sCheData.verMainDatas.push_back(sDataBuf[i]);
 			}
 			delete [] sDataBuf;
