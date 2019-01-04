@@ -17,41 +17,173 @@ bool CCheFileData::SaveFile()
 	return true;
 }
 
-bool CCheFileData::SaveFile(LPCTSTR)
+bool CCheFileData::SaveFile(LPCTSTR sFile)
 {
+	USES_CONVERSION;
+	FILE * fp = fopen(T2A(sFile), "wr");
+	if (!fp)
+	{
+		return false;
+	}
+
+	do 
+	{
+		{
+			char sBuf[0x38] = {0};
+			strcpy(sBuf, "CHERI10 ");
+
+			*(int*)&sBuf[0x22] = m_sCheData.nDataCnt;
+			*(int*)&sBuf[0x26] = m_sCheData.nYLimit_High;
+			*(int*)&sBuf[0x2A] = m_sCheData.nYLimit_Low;
+			memcpy(&sBuf[0x2E],m_sCheData.unKownBytes_0a,10);
+			fwrite(sBuf, 1, 0x38, fp);
+		}
+
+		float ftotal = 0;
+		if (m_sCheData.nDataCnt > 0)
+		{	
+			assert(m_sCheData.nDataCnt == m_sCheData.verMainDatas.size());
+			fwrite(m_sCheData.verMainDatas.data(), 4, m_sCheData.nDataCnt, fp);
+		}
+		else
+		{
+			assert(0);
+		}
+		
+		assert(*(int*)&m_sCheData.unKownBytes_2e[6] == m_sCheData.nDataCnt);
+		*(int*)&m_sCheData.unKownBytes_2e[6] = m_sCheData.nDataCnt;
+		fwrite(m_sCheData.unKownBytes_2e, 1, 0x2E, fp);
+
+		{
+			char sBuf[0x2C] = {0};
+			assert(m_sCheData.sJfData.wType == 3);
+			assert(m_sCheData.sJfData.nItemCnt == m_sCheData.sJfData.wItemCnt);	
+
+			*(DATE*)&sBuf[0] = (DATE)m_sCheData.dtOle1;
+			*(DATE*)&sBuf[8] = (DATE)m_sCheData.dtOle2;
+			*(int*)&sBuf[0x10] = m_sCheData.nUnKnowVal2;
+			*(DATE*)&sBuf[0x14] = (DATE)m_sCheData.dtOle3;
+			*(DATE*)&sBuf[0x1C] = (DATE)m_sCheData.dtOle4;
+
+			*(WORD*)&sBuf[0x24] = m_sCheData.sJfData.wType;
+			*(WORD*)&sBuf[0x26] = m_sCheData.sJfData.wItemCnt;
+			*(WORD*)&sBuf[0x28] = m_sCheData.sJfData.nItemCnt;
+			fwrite(sBuf, 1, 0x2C, fp);
+		}
+
+		{
+			char * pJfDatas = new char[0x41 * 0x12];
+			memset(pJfDatas, 0, 0x41 * 0x12);
+			assert(m_sCheData.sJfData.nItemCnt == m_sCheData.sJfData.verItems.size());
+			for(int i = 0; i < m_sCheData.sJfData.nItemCnt; i++)
+			{
+				sJfItem & si = m_sCheData.sJfData.verItems[i];
+				*(float*)(&pJfDatas[i * 0x12] + 0) = si.fTimeFrom;
+				*(float*)(&pJfDatas[i * 0x12] + 4) = si.fTimeTo;
+				*(float*)(&pJfDatas[i * 0x12] + 8) = si.fPowerFrom;
+				*(float*)(&pJfDatas[i * 0x12] + 0x0C) = si.fPowerTo;
+				*(WORD*)(&pJfDatas[i * 0x12] + 0x10) = si.wUnKnow;
+
+				assert(si.wUnKnow == 0);
+			}
+			fwrite(pJfDatas, 0x12, 0x41, fp);	//总量
+			delete [] pJfDatas;
+		}
+
+		{
+			char * pJfDatas2 = new char[0x41 * 0x2C + 8];
+			memset(pJfDatas2, 0, 0x41 * 0x2C + 8);
+
+			*(WORD*)&pJfDatas2[0] = m_sCheData.sJfData2.wType;
+			*(WORD*)&pJfDatas2[2] = m_sCheData.sJfData2.wItemCnt;
+			*(WORD*)&pJfDatas2[4] = m_sCheData.sJfData2.nItemCnt;
+			assert(m_sCheData.sJfData2.nItemCnt == m_sCheData.sJfData2.verItems.size());
+
+			m_sCheData.fTopSqrtTotal = 0;
+			for(int i = 0; i < m_sCheData.sJfData2.nItemCnt; i++)
+			{
+				int nItemFrom = 8 + i * 0x2C;
+				sJfItem2 & si = m_sCheData.sJfData2.verItems[i];
+				si.wUnKnow1 = *(WORD*)(&pJfDatas2[nItemFrom] + 0) = si.wUnKnow1;
+				si.dwUnknow1= *(DWORD*)(&pJfDatas2[nItemFrom] + 2);
+				si.dwUnknow2= *(DWORD*)(&pJfDatas2[nItemFrom] + 6);
+				si.dwUnknow3= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A);
+				si.dwUnknow4= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E);
+				si.dwUnknow5= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x12);
+				si.dwUnknow6= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x16);
+				si.dwUnknow7= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x1A);
+				si.nTopSqrt= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E);
+				si.nTopHVal= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x22);
+				si.nIdx= *(WORD*)(&pJfDatas2[nItemFrom] + 0x26);
+				si.dwUnknow8= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x28);		// =0
+
+				assert(si.dwUnknow8 == 0);
+
+				m_sCheData.fTopSqrtTotal += si.nTopSqrt;
+				m_sCheData.sJfData2.verItems.push_back(si);
+			}
+			fwrite(pJfDatas2, 1, 0x41 * 0x2C + 8, fp);	//总量
+			delete [] pJfDatas2;
+		}
+
+		{
+			char buf[0x12] = {0};
+			char * pBuf = &buf[0];
+
+			fread(pBuf, 1, 0x12, fp);	//总量
+
+			m_sCheData.sJgData.wType = *(WORD*)&pBuf[0];
+			m_sCheData.sJgData.wItemCnt = *(WORD*)&pBuf[2];
+			m_sCheData.sJgData.nItemCnt = *(WORD*)&pBuf[4];
+
+			USES_CONVERSION;
+			for (int i = 0; i < m_sCheData.sJgData.nItemCnt; i++)
+			{
+				sJfItem3 sItem;
+				WORD wNameCnt = 0;
+				fread(&wNameCnt, 1, 2, fp);	//总量
+
+				char sName[200] = {0};
+				fread(sName, 1, wNameCnt, fp);
+				sName[wNameCnt] = 0;
+
+				sItem.sGroupName = A2T(sName);
+
+				char sTmp[0x3C] = {0};
+				fread(sTmp, 1, 0x3C, fp);
+
+				sItem.fLiveTime = *(float*)&sTmp[0x08];		//保留时间
+
+				sItem.fContentsVal = *(float*)&sTmp[0x0C];	
+
+				sItem.fLivePower = *(float*)&sTmp[0x1C];	//保留时间对应的电压
+				sItem.nIdx1 = *(int*)&sTmp[0x28];	//	
+				sItem.nIdx2 = *(int*)&sTmp[0x2C];	//
+
+				assert(sItem.nIdx1 == sItem.nIdx2);
+
+				sItem.fUnKonw1 = *(float*)&sTmp[0x00];
+				sItem.fUnKonw2 = *(float*)&sTmp[0x04];
+				sItem.fUnKonw3 = *(float*)&sTmp[0x10];
+				sItem.fUnKonw4 = *(float*)&sTmp[0x14];
+				sItem.fUnKonw5 = *(float*)&sTmp[0x18];
+				sItem.fUnKonw6 = *(float*)&sTmp[0x20];
+				sItem.fUnKonw7 = *(float*)&sTmp[0x24];
+
+				sItem.dwUnkown1= *(DWORD*)&sTmp[0x30];		//0
+				sItem.dwUnkown2= *(DWORD*)&sTmp[0x34];		//-1
+				assert(sItem.dwUnkown1 == 0);
+				assert(sItem.dwUnkown2 == 0xffffffff);
+
+				sItem.fUnKonw8 = *(float*)&sTmp[0x38];
+				m_sCheData.sJgData.verItems.push_back(sItem);
+			}
+		}
+
+	} while (false);
+
+	fclose(fp);
 	return true;
-}
-
-void CCheFileData::Clear()
-{
-	memset(&m_sCheData.sVer[0], 0, 0x22);
-	m_sCheData.nDataCnt = 0;
-	m_sCheData.nYLimit_High  = 0;
-	m_sCheData.nYLimit_Low = 0;
-	m_sCheData.verMainDatas.clear();
-	memset(&m_sCheData.bufUnKnow1[0], 0, 0x2E);
-	m_sCheData.dtOle1 = 0;
-	m_sCheData.dtOle2 = 0;
-	m_sCheData.nUnKnowVal2 = 0;
-	m_sCheData.dtOle3 = 0;
-	m_sCheData.dtOle4 = 0; 
-
-	m_sCheData.sJfData.nItemCnt = 0;
-	m_sCheData.sJfData.wType = 0;
-	m_sCheData.sJfData.wItemCnt = 0;
-	m_sCheData.sJfData.verItems.clear();
-
-	m_sCheData.sJfData2.nItemCnt = 0;
-	m_sCheData.sJfData2.wType = 0;
-	m_sCheData.sJfData2.wItemCnt = 0;
-	m_sCheData.sJfData2.verItems.clear();
-
-	m_sCheData.sJgData.nItemCnt = 0;
-	m_sCheData.sJgData.wType = 0;
-	m_sCheData.sJgData.wItemCnt = 0;
-	m_sCheData.sJgData.verItems.clear();
-
-	m_sCheData.fTopSqrtTotal = 0;
 }
 
 bool CCheFileData::LoadFile(LPCTSTR sInput)
@@ -80,6 +212,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 			m_sCheData.nDataCnt = *(int*)&sBuf[0x22];
 			m_sCheData.nYLimit_High = *(int*)&sBuf[0x26];
 			m_sCheData.nYLimit_Low = *(int*)&sBuf[0x2A];
+			memcpy(m_sCheData.unKownBytes_0a, &sBuf[0x2E], 10);
 		}
 
 		float ftotal = 0;
@@ -100,7 +233,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 			assert(0);
 		}
 
-		fread(m_sCheData.bufUnKnow1, 1, 0x2E, fp);
+		fread(m_sCheData.unKownBytes_2e, 1, 0x2E, fp);
 
 		{
 			char sBuf[0x2C] = {0};
@@ -241,4 +374,39 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 	m_strInputfile = sInput;
 
 	return true;
+}
+
+
+
+void CCheFileData::Clear()
+{
+	memset(&m_sCheData.sVer[0], 0, 0x22);
+	m_sCheData.nDataCnt = 0;
+	m_sCheData.nYLimit_High  = 0;
+	m_sCheData.nYLimit_Low = 0;
+	m_sCheData.verMainDatas.clear();
+	memset(&m_sCheData.unKownBytes_0a[0], 0, 0x0a);
+	memset(&m_sCheData.unKownBytes_2e[0], 0, 0x2E);
+	m_sCheData.dtOle1 = 0;
+	m_sCheData.dtOle2 = 0;
+	m_sCheData.nUnKnowVal2 = 0;
+	m_sCheData.dtOle3 = 0;
+	m_sCheData.dtOle4 = 0; 
+
+	m_sCheData.sJfData.nItemCnt = 0;
+	m_sCheData.sJfData.wType = 0;
+	m_sCheData.sJfData.wItemCnt = 0;
+	m_sCheData.sJfData.verItems.clear();
+
+	m_sCheData.sJfData2.nItemCnt = 0;
+	m_sCheData.sJfData2.wType = 0;
+	m_sCheData.sJfData2.wItemCnt = 0;
+	m_sCheData.sJfData2.verItems.clear();
+
+	m_sCheData.sJgData.nItemCnt = 0;
+	m_sCheData.sJgData.wType = 0;
+	m_sCheData.sJgData.wItemCnt = 0;
+	m_sCheData.sJgData.verItems.clear();
+
+	m_sCheData.fTopSqrtTotal = 0;
 }

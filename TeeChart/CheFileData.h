@@ -80,8 +80,9 @@ struct sCheData
 	int nDataCnt;
 	int nYLimit_High;
 	int nYLimit_Low;
+	BYTE unKownBytes_0a[0x0a];
 	vector<float>	verMainDatas;
-	char bufUnKnow1[0x2E];
+	BYTE unKownBytes_2e[0x2E];
 	DATE dtOle1;
 	DATE dtOle2;
 	int nUnKnowVal2;
@@ -108,6 +109,8 @@ public:
 	bool SaveFile(LPCTSTR);
 
 	sCheData * GetData(){return &m_sCheData;}
+
+	void ChangeDataCnt(int);
 
 protected:
 	void Clear();
