@@ -71,6 +71,7 @@ struct sItemData3
 	WORD wType;
 	WORD wItemCnt;
 	int nItemCnt;
+	BYTE unKownBytes_0a[0x0a];
 	vector<sJfItem3>	verItems;
 };
 
@@ -92,7 +93,7 @@ struct sCheData
 	sItemData	sJfData;
 	sItemData2	sJfData2;
 	sItemData3  sJgData;	//结果数据
-
+	BYTE unKownBytes_aa[0xaa];
 	//
 	float fTopSqrtTotal;
 };
@@ -110,7 +111,9 @@ public:
 
 	sCheData * GetData(){return &m_sCheData;}
 
+public:
 	void ChangeDataCnt(int);
+	void ChangeDataRange(int, int);
 
 protected:
 	void Clear();
@@ -118,5 +121,8 @@ protected:
 protected:
 	sCheData	m_sCheData;
 	CString		m_strInputfile;
+
+protected:
+	int			m_nSaveDataFromIdx;
 };
 
