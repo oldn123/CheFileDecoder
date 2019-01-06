@@ -225,7 +225,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 		fread(m_sCheData.unKownBytes_2e, 1, 0x2E, fp);
 
 		assert(*(DWORD*)&m_sCheData.unKownBytes_2e[0] == 0x1000c);	//0c 00 01 00
-		assert(*(DWORD*)&m_sCheData.unKownBytes_2e[0x2e-4] == 0x1000e);	//0e 00 01 00
+		assert(*(DWORD*)&m_sCheData.unKownBytes_2e[0x2e-4] == 0x10000e);	//0e 00 01 00
 
 		{
 			char sBuf[0x2C] = {0};
