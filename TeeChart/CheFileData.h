@@ -114,6 +114,7 @@ public:
 	int		GetDataCnt();
 	bool	GetDataByIdx(int, double & );
 	bool	SetDataByIdx(int, double);
+	double  GetXValue(int );
 
 	void	ChangeDataCnt(int);
 	void	ChangeDataRange(int, int);
