@@ -82,7 +82,7 @@ struct sCheData
 	int nYLimit_High;
 	int nYLimit_Low;
 	BYTE unKownBytes_0a[0x0a];
-	vector<float>	verMainDatas;
+	vector<DWORD>	verMainDatas;
 	BYTE unKownBytes_2e[0x2E];
 	DATE dtOle1;
 	DATE dtOle2;
@@ -106,14 +106,17 @@ public:
 
 	bool LoadFile(LPCTSTR);
 
-	bool SaveFile();
 	bool SaveFile(LPCTSTR);
 
 	sCheData * GetData(){return &m_sCheData;}
 
 public:
-	void ChangeDataCnt(int);
-	void ChangeDataRange(int, int);
+	int		GetDataCnt();
+	bool	GetDataByIdx(int, double & );
+	bool	SetDataByIdx(int, double);
+
+	void	ChangeDataCnt(int);
+	void	ChangeDataRange(int, int);
 
 protected:
 	void Clear();

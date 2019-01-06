@@ -12,11 +12,6 @@ CCheFileData::~CCheFileData(void)
 {
 }
 
-bool CCheFileData::SaveFile()
-{
-	return true;
-}
-
 bool CCheFileData::SaveFile(LPCTSTR sFile)
 {
 	USES_CONVERSION;
@@ -211,15 +206,13 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 			memcpy(m_sCheData.unKownBytes_0a, &sBuf[0x2E], 10);
 		}
 
-		float ftotal = 0;
 		if (m_sCheData.nDataCnt > 0)
 		{
-			float * sDataBuf = new float[m_sCheData.nDataCnt];
+			DWORD * sDataBuf = new DWORD[m_sCheData.nDataCnt];
 			fread(sDataBuf, 4, m_sCheData.nDataCnt, fp);
 
 			for (int i = 0; i < m_sCheData.nDataCnt; i++)
 			{
-				ftotal += sDataBuf[i];
 				m_sCheData.verMainDatas.push_back(sDataBuf[i]);
 			}
 			delete [] sDataBuf;
@@ -230,6 +223,9 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 		}
 
 		fread(m_sCheData.unKownBytes_2e, 1, 0x2E, fp);
+
+		assert(*(int*)&m_sCheData.unKownBytes_2e[0] == 0x1000c);	//0c 00 01 00
+
 
 		{
 			char sBuf[0x2C] = {0};
@@ -386,6 +382,39 @@ void CCheFileData::ChangeDataRange(int nFrom, int nTo)
 void CCheFileData::ChangeDataCnt(int nCnt)
 {
 	m_sCheData.nDataCnt = nCnt;
+}
+
+int	CCheFileData::GetDataCnt()
+{
+	assert(m_sCheData.nDataCnt == m_sCheData.verMainDatas.size());
+	return m_sCheData.nDataCnt;
+}
+
+bool CCheFileData::GetDataByIdx(int nIdx, double & fRetData)
+{
+	if (nIdx < m_sCheData.verMainDatas.size())
+	{
+		DWORD dwData = m_sCheData.verMainDatas.at(nIdx);
+		dwData -= 0x800000;
+		double fData = (int)dwData;
+		fData /= 6.553599834442139;
+		fRetData = fData;
+		return true;
+	}
+	return false;
+}
+
+bool CCheFileData::SetDataByIdx(int nIdx, double fVal)
+{
+	if (nIdx < m_sCheData.verMainDatas.size())
+	{
+		double newVal = fVal * 6.553599834442139;
+		int nVal = (int)newVal;
+		nVal += 0x800000;
+		m_sCheData.verMainDatas[nIdx] = (DWORD)nVal;
+		return true;
+	}
+	return false;
 }
 
 
