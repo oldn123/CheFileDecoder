@@ -3,12 +3,12 @@
 #include <algorithm>
 using namespace std;
 
-struct CListCtrl_DataRecord
+struct CListCtrl_DataRecord2
 {
-	CListCtrl_DataRecord()
+	CListCtrl_DataRecord2()
 	{}
 
-	CListCtrl_DataRecord(
+	CListCtrl_DataRecord2(
 	CString	sNumber,		//序号
 	CString	sliveTime,	//保留时间
 	CString	sTopSqrt,		//峰面积
@@ -62,14 +62,14 @@ struct CListCtrl_DataRecord
 	int  GetColCount() const { return 9; }
 };
 
-class CListCtrl_DataModel
+class CListCtrl_DataModel2 : public IDataModelForList
 {
-	vector<CListCtrl_DataRecord> m_Records;
+	vector<CListCtrl_DataRecord2> m_Records;
 	int	m_LookupTime;
 	int m_RowMultiplier;
 
 public:
-	CListCtrl_DataModel()
+	CListCtrl_DataModel2()
 		:m_RowMultiplier(0)
 		,m_LookupTime(0)
 	{
@@ -81,7 +81,7 @@ public:
 		m_Records.clear();
 		if (m_RowMultiplier > 1)
 		{
-			vector<CListCtrl_DataRecord> rowset(m_Records);
+			vector<CListCtrl_DataRecord2> rowset(m_Records);
 			m_Records.reserve((m_RowMultiplier-1) * rowset.size());
 			for(int i = 0 ; i < m_RowMultiplier ; ++i)
 			{
@@ -122,16 +122,16 @@ public:
 		CString sContentsVal,	//含量
 		CString sTopStype		//峰形
 		){
-		m_Records.push_back( CListCtrl_DataRecord(sNumber, sliveTime, sTopSqrt, sTopSqrtPer, sTopHVal, 
+		m_Records.push_back( CListCtrl_DataRecord2(sNumber, sliveTime, sTopSqrt, sTopSqrtPer, sTopHVal, 
 			sTopWVal, sGroupName, sContentsVal, sTopStype));
 		return m_Records.size() - 1;
 	}
 
 	size_t GetRowIds() const { return m_Records.size(); }
-	int GetColCount() const { return CListCtrl_DataRecord().GetColCount(); }
-	CString GetColTitle(int col) const { return CListCtrl_DataRecord().GetCellText(col, true); }
+	int GetColCount() const { return CListCtrl_DataRecord2().GetColCount(); }
+	CString GetColTitle(int col) const { return CListCtrl_DataRecord2().GetCellText(col, true); }
 
-	vector<CListCtrl_DataRecord>& GetRecords() { return m_Records; }
+	vector<CListCtrl_DataRecord2>& GetRecords() { return m_Records; }
 	void SetLookupTime(int lookupTimes) { m_LookupTime = lookupTimes; }
 	void SetRowMultiplier(int multiply) { if (m_RowMultiplier != multiply ) { m_RowMultiplier = multiply; InitDataModel(); } }
 };
