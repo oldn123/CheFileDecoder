@@ -105,7 +105,7 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 6)= si.dwUnknow2;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A)	= si.dwUnknow3;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E)	= si.dwUnknow4;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x12)	= si.dwUnknow5;
+				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x12)	= si.nTopHPos;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x16)	= si.dwUnknow6;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1A)	= si.dwUnknow7;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E)	= si.nTopSqrt;
@@ -150,8 +150,8 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 
 				assert(sItem.nIdx1 == sItem.nIdx2);
 
-				*(float*)&sTmp[0x00] = sItem.fUnKonw1;
-				*(float*)&sTmp[0x04] = sItem.fUnKonw2;
+				*(float*)&sTmp[0x00] = sItem.fTopSqrt;
+				*(float*)&sTmp[0x04] = sItem.fTopHVal;
 				*(float*)&sTmp[0x10] = sItem.fUnKonw3;
 				*(float*)&sTmp[0x14] = sItem.fUnKonw4;
 				*(float*)&sTmp[0x18] = sItem.fUnKonw5;
@@ -285,7 +285,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				si.dwUnknow2= *(DWORD*)(&pJfDatas2[nItemFrom] + 6);
 				si.dwUnknow3= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A);
 				si.dwUnknow4= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E);
-				si.dwUnknow5= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x12);
+				si.nTopHPos = *(DWORD*)(&pJfDatas2[nItemFrom] + 0x12);
 				si.dwUnknow6= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x16);
 				si.dwUnknow7= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x1A);
 				si.nTopSqrt= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E);
@@ -339,8 +339,8 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 
 				assert(sItem.nIdx1 == sItem.nIdx2);
 
-				sItem.fUnKonw1 = *(float*)&sTmp[0x00];
-				sItem.fUnKonw2 = *(float*)&sTmp[0x04];
+				sItem.fTopSqrt = *(float*)&sTmp[0x00];
+				sItem.fTopHVal = *(float*)&sTmp[0x04];
 				sItem.fUnKonw3 = *(float*)&sTmp[0x10];
 				sItem.fUnKonw4 = *(float*)&sTmp[0x14];
 				sItem.fUnKonw5 = *(float*)&sTmp[0x18];
@@ -417,11 +417,74 @@ bool CCheFileData::SetDataByIdx(int nIdx, double fVal)
 	return false;
 }
 
-double CCheFileData::GetXValue(int nIdx)
+int	CCheFileData::TimeToIdx(double dVal)
+{
+	dVal *= 60000.0f;
+	dVal  /= 50;
+	return (int)dVal;
+}
+
+double CCheFileData::IdxToTime(int nIdx)
 {
 	double dval = nIdx * 50;
 	dval /= 60000.0;
 	return dval;
+}
+
+double CCheFileData::GetXValue(int nIdx)
+{
+	return IdxToTime(nIdx);
+}
+
+int	 CCheFileData::GetWaveCnt()
+{
+	return m_sCheData.sJfData.verItems.size();
+}
+
+bool CCheFileData::GetWaveByIdx(int nIdx, sJfItem & sItem)
+{
+	if (nIdx >= GetWaveCnt())
+	{
+		return false;
+	}
+	sItem = m_sCheData.sJfData.verItems.at(nIdx);
+	return true;
+}
+
+void CCheFileData::ZoomWave(int nIdx, sJfItem & item, float fZoom)
+{
+	int nIdxFrom = TimeToIdx(item.fTimeFrom);
+	int nIdxTo = TimeToIdx(item.fTimeTo);
+	for (int i = nIdxFrom ; i <= nIdxTo; i++)
+	{
+		double dVal = 0;
+		if (GetDataByIdx(i, dVal))
+		{
+			dVal *= fZoom;
+			SetDataByIdx(i, dVal);
+		}
+	}
+}
+
+bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
+{
+	if (nIdx >= GetWaveCnt() || nTop  < 1)
+	{
+		return false;
+	}
+	sJfItem sOld = m_sCheData.sJfData.verItems[nIdx];
+		
+	double fZoom = (double)nTop / m_sCheData.sJfData2.verItems[nIdx].nTopHVal;
+
+	m_sCheData.sJfData2.verItems[nIdx].nTopHVal = nTop;
+
+	m_sCheData.sJfData2.verItems[nIdx].nTopHPos *= fZoom;
+
+	if (fZoom != 1)
+	{
+		ZoomWave(nIdx, sOld, fZoom);
+	}
+	return true;
 }
 
 

@@ -2357,8 +2357,14 @@ bool CGridListCtrlEx::OnEditComplete(int nRow, int nCol, CWnd* pEditor, LV_DISPI
 {
 	CGridColumnTrait* pTrait = GetCellColumnTrait(nRow, nCol);
 	if (pTrait != NULL)
-		pTrait->OnEditEnd();
-
+	{
+		CString sText;
+		if (pEditor)
+		{
+			pEditor->GetWindowText(sText);
+		}
+		pTrait->OnEditEnd(nRow, nCol, sText);
+	}
 	if (pLVDI == NULL)
 		return false;	// Parent view rejected LVN_BEGINLABELEDIT notification
 

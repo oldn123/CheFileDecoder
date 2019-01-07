@@ -203,7 +203,6 @@
     <ClInclude Include="CGridListCtrlEx\CGridRowTraitXP.h" />
     <ClInclude Include="CGridListCtrlEx\ViewConfigSection.h" />
     <ClInclude Include="CheFileData.h" />
-    <ClInclude Include="CListCtrl_DataModel.h" />
     <ClInclude Include="CScroll.h" />
     <ClInclude Include="CSeries.h" />
     <ClInclude Include="CTChart.h" />

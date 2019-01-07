@@ -102,9 +102,6 @@
     <ClInclude Include="CGridListCtrlEx\ViewConfigSection.h">
       <Filter>listCtrl</Filter>
     </ClInclude>
-    <ClInclude Include="CListCtrl_DataModel.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="CheFileData.h">
       <Filter>头文件</Filter>
     </ClInclude>

@@ -26,11 +26,12 @@ struct sJfItem2
 	DWORD dwUnknow2;
 	DWORD dwUnknow3;
 	DWORD dwUnknow4;
-	DWORD dwUnknow5;
+	
 	DWORD dwUnknow6;
 	DWORD dwUnknow7;
 	int	  nTopSqrt;
 	int	  nTopHVal;
+	int	  nTopHPos;			//顶部的位置
 	WORD  nIdx;
 	DWORD dwUnknow8;		// =0
 };
@@ -52,9 +53,9 @@ struct sJfItem3
 	float fLivePower;	//保留时间对应的电压
 	int   nIdx1;
 	int   nIdx2;
+	float fTopSqrt;
+	float fTopHVal;
 
-	float fUnKonw1;
-	float fUnKonw2;
 	float fUnKonw3;
 	float fUnKonw4;
 	float fUnKonw5;
@@ -119,8 +120,14 @@ public:
 	void	ChangeDataCnt(int);
 	void	ChangeDataRange(int, int);
 
+	int		GetWaveCnt();
+	bool	GetWaveByIdx(int, sJfItem & );
+	bool	ChangeWaveTop(int, int );
 protected:
-	void Clear();
+	void	Clear();
+	void	ZoomWave(int nIdx, sJfItem & item, float fZoom);
+	int		TimeToIdx(double);
+	double	IdxToTime(int);
 
 protected:
 	sCheData	m_sCheData;
