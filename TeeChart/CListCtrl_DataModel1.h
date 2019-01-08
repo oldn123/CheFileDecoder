@@ -15,8 +15,6 @@ struct CListCtrl_DataRecord
 	CString	sTopSqrtPer,	//峰面积比
 	CString	sTopHVal,		//峰高
 	CString	sTopWVal,		//峰宽
-	CString sGroupName,	//组名
-	CString sContentsVal,	//含量
 	CString sTopStype		//峰形
 	)
 	{
@@ -26,8 +24,6 @@ struct CListCtrl_DataRecord
 		m_sTopSqrtPer	= sTopSqrtPer;	//峰面积比
 		m_sTopHVal		= sTopHVal;		//峰高
 		m_sTopWVal		= sTopWVal;		//峰宽
-		m_sGroupName	= sGroupName;	//组名
-		m_sContentsVal	= sContentsVal;	//含量
 		m_sTopStype		= sTopStype;	//峰形
 	}
 
@@ -37,29 +33,26 @@ struct CListCtrl_DataRecord
 	CString	m_sTopSqrtPer;	//峰面积比
 	CString	m_sTopHVal;		//峰高
 	CString	m_sTopWVal;		//峰宽
-	CString m_sGroupName;	//组名
-	CString m_sContentsVal;	//含量
 	CString m_sTopStype;	//峰形
 
 
-	CString GetCellText(int col, bool title) const
+	CString GetCellText(int col, bool title, bool & bCanEdit) const
 	{
+		bCanEdit = false;
 		switch(col)
 		{
 		case 0: { static const CString title0(_T("序号")); return title ? title0 : m_sNumber; }
-		case 1: { static const CString title1(_T("保留时间")); return title ? title1 : m_sliveTime; }
-		case 2: { static const CString title2(_T("峰面积")); return title ? title2 : m_sTopSqrt; }
+		case 1: { static const CString title1(_T("保留时间")); return title ? title1 : m_sliveTime; bCanEdit = true;}
+		case 2: { static const CString title2(_T("峰面积")); return title ? title2 : m_sTopSqrt; bCanEdit = true;}
 		case 3: { static const CString title3(_T("峰面积比")); return title ? title3 : m_sTopSqrtPer; }
-		case 4: { static const CString title0(_T("峰高")); return title ? title0 : m_sTopHVal; }
-		case 5: { static const CString title1(_T("峰宽")); return title ? title1 : m_sTopWVal; }
-		case 6: { static const CString title2(_T("组名")); return title ? title2 : m_sGroupName; }
-		case 7: { static const CString title3(_T("含量")); return title ? title3 : m_sContentsVal; }
-		case 8: { static const CString title3(_T("峰形")); return title ? title3 : m_sTopStype; }
+		case 4: { static const CString title0(_T("峰高")); return title ? title0 : m_sTopHVal; bCanEdit = true;}
+		case 5: { static const CString title1(_T("峰宽")); return title ? title1 : m_sTopWVal; bCanEdit = true;}
+		case 6: { static const CString title3(_T("峰形")); return title ? title3 : m_sTopStype; }
 		default:{ static const CString emptyStr; return emptyStr; }
 		}
 	}
 
-	int  GetColCount() const { return 9; }
+	int  GetColCount() const { return 7; }
 };
 
 class IDataModelForList
@@ -69,7 +62,7 @@ public:
 	virtual void Clear() = 0;
 	virtual size_t GetRowIds() const = 0;
 	virtual int GetColCount() const = 0;
-	virtual CString GetColTitle(int col) const  = 0;
+	virtual CString GetColTitle(int col, bool &) const  = 0;
 	virtual void SetLookupTime(int lookupTimes) = 0;
 	virtual void SetRowMultiplier(int multiply) = 0;
 };
@@ -118,7 +111,8 @@ public:
 					break;
 			}
 		}
-		return m_Records.at(lookupId).GetCellText(col, false);
+		bool bCanEdit = false;
+		return m_Records.at(lookupId).GetCellText(col, false, bCanEdit);
 	}
 
 	void Clear(){m_Records.clear();}
@@ -130,18 +124,15 @@ public:
 		CString	sTopSqrtPer,	//峰面积比
 		CString	sTopHVal,		//峰高
 		CString	sTopWVal,		//峰宽
-		CString sGroupName,		//组名
-		CString sContentsVal,	//含量
 		CString sTopStype		//峰形
 		){
-		m_Records.push_back( CListCtrl_DataRecord(sNumber, sliveTime, sTopSqrt, sTopSqrtPer, sTopHVal, 
-			sTopWVal, sGroupName, sContentsVal, sTopStype));
+		m_Records.push_back( CListCtrl_DataRecord(sNumber, sliveTime, sTopSqrt, sTopSqrtPer, sTopHVal, sTopWVal, sTopStype));
 		return m_Records.size() - 1;
 	}
 
 	size_t GetRowIds() const { return m_Records.size(); }
 	int GetColCount() const { return CListCtrl_DataRecord().GetColCount(); }
-	CString GetColTitle(int col) const { return CListCtrl_DataRecord().GetCellText(col, true); }
+	CString GetColTitle(int col, bool & bCanEdit) const { return CListCtrl_DataRecord().GetCellText(col, true, bCanEdit); }
 
 	vector<CListCtrl_DataRecord>& GetRecords() { return m_Records; }
 	void SetLookupTime(int lookupTimes) { m_LookupTime = lookupTimes; }

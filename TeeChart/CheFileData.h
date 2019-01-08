@@ -106,12 +106,13 @@ public:
 	~CCheFileData(void);
 
 	bool LoadFile(LPCTSTR);
-
 	bool SaveFile(LPCTSTR);
 
 	sCheData * GetData(){return &m_sCheData;}
 
 public:
+	void	ChangeTimes(DATE dtCreate);
+	
 	int		GetDataCnt();
 	bool	GetDataByIdx(int, double & );
 	bool	SetDataByIdx(int, double);
@@ -123,6 +124,9 @@ public:
 	int		GetWaveCnt();
 	bool	GetWaveByIdx(int, sJfItem & );
 	bool	ChangeWaveTop(int, int );
+	bool	ChangeWaveTime(int, double tFrom, double tEnd, double tLive );
+	void	RemoveWave(int);
+
 protected:
 	void	Clear();
 	void	ZoomWave(int nIdx, sJfItem & item, float fZoom);

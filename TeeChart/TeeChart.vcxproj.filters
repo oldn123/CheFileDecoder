@@ -105,6 +105,15 @@
     <ClInclude Include="CheFileData.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CListCtrl_DataModel1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CListCtrl_DataModel2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CListCtrl_DataModel3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TeeChart.cpp">

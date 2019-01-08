@@ -487,6 +487,33 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 	return true;
 }
 
+void CCheFileData::ChangeTimes(DATE dtFrom)
+{
+	double ddiff = m_sCheData.dtOle2 - m_sCheData.dtOle1;
+	m_sCheData.dtOle1 = dtFrom;
+	if (m_sCheData.dtOle2)
+	{
+		m_sCheData.dtOle2 += ddiff;
+	}
+	if (m_sCheData.dtOle3)
+	{
+		m_sCheData.dtOle3 += ddiff;
+	}
+	if (m_sCheData.dtOle4)
+	{
+		m_sCheData.dtOle4 += ddiff;
+	}
+}
+
+bool CCheFileData::ChangeWaveTime(int, double tFrom, double tEnd, double tLive )
+{
+	return false;
+}
+
+void CCheFileData::RemoveWave(int)
+{
+
+}
 
 void CCheFileData::Clear()
 {

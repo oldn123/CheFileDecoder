@@ -24,11 +24,12 @@ struct CListCtrl_DataRecord3
 	CString	sData[10];	//±£¡Ù ±º‰
 
 
-	CString GetCellText(int col, bool title) const
+	CString GetCellText(int col, bool title, bool & bCanEdit) const
 	{
+		bCanEdit = true;
 		switch(col)
 		{
-		case 0: { static const CString title0(_T("–Ú∫≈")); return title ? title0 : m_sNumber; }
+		case 0: { static const CString title0(_T("–Ú∫≈")); return title ? title0 : m_sNumber; bCanEdit = false;}
 		case 1: { static const CString title1(_T("1")); return title ? title1 : sData[0]; }
 		case 2: { static const CString title2(_T("2")); return title ? title2 : sData[1]; }
 		case 3: { static const CString title3(_T("3")); return title ? title3 : sData[2]; }
@@ -90,7 +91,8 @@ public:
 					break;
 			}
 		}
-		return m_Records.at(lookupId).GetCellText(col, false);
+		bool b;
+		return m_Records.at(lookupId).GetCellText(col, false, b);
 	}
 
 	void Clear(){m_Records.clear();}
@@ -105,7 +107,7 @@ public:
 
 	size_t GetRowIds() const { return m_Records.size(); }
 	int GetColCount() const { return CListCtrl_DataRecord3().GetColCount(); }
-	CString GetColTitle(int col) const { return CListCtrl_DataRecord3().GetCellText(col, true); }
+	CString GetColTitle(int col, bool & bCanEdit) const { return CListCtrl_DataRecord3().GetCellText(col, true, bCanEdit); }
 
 	vector<CListCtrl_DataRecord3>& GetRecords() { return m_Records; }
 	void SetLookupTime(int lookupTimes) { m_LookupTime = lookupTimes; }
