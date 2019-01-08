@@ -42,11 +42,11 @@ struct CListCtrl_DataRecord
 		switch(col)
 		{
 		case 0: { static const CString title0(_T("序号")); return title ? title0 : m_sNumber; }
-		case 1: { static const CString title1(_T("保留时间")); return title ? title1 : m_sliveTime; bCanEdit = true;}
-		case 2: { static const CString title2(_T("峰面积")); return title ? title2 : m_sTopSqrt; bCanEdit = true;}
+		case 1: { static const CString title1(_T("保留时间")); bCanEdit = true; return title ? title1 : m_sliveTime;}
+		case 2: { static const CString title2(_T("峰面积")); bCanEdit = true; return title ? title2 : m_sTopSqrt;}
 		case 3: { static const CString title3(_T("峰面积比")); return title ? title3 : m_sTopSqrtPer; }
-		case 4: { static const CString title0(_T("峰高")); return title ? title0 : m_sTopHVal; bCanEdit = true;}
-		case 5: { static const CString title1(_T("峰宽")); return title ? title1 : m_sTopWVal; bCanEdit = true;}
+		case 4: { static const CString title0(_T("峰高")); bCanEdit = true; return title ? title0 : m_sTopHVal;}
+		case 5: { static const CString title1(_T("峰宽")); bCanEdit = true; return title ? title1 : m_sTopWVal;}
 		case 6: { static const CString title3(_T("峰形")); return title ? title3 : m_sTopStype; }
 		default:{ static const CString emptyStr; return emptyStr; }
 		}

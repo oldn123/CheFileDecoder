@@ -123,8 +123,12 @@ public:
 
 	int		GetWaveCnt();
 	bool	GetWaveByIdx(int, sJfItem & );
+	bool	GetWaveLiveTimeByIdx(int, double & );
+	bool	GetWaveTopByIdx(int, int & );
 	bool	ChangeWaveTop(int, int );
-	bool	ChangeWaveTime(int, double tFrom, double tEnd, double tLive );
+
+	bool	ChangeWaveTimeRange(int, double tFrom, double tEnd);
+	bool	ChangeWaveTimePos(int, double tLive );
 	void	RemoveWave(int);
 
 protected:
@@ -132,6 +136,8 @@ protected:
 	void	ZoomWave(int nIdx, sJfItem & item, float fZoom);
 	int		TimeToIdx(double);
 	double	IdxToTime(int);
+	int		TestTimeRange(double dFrom, double dTo, int butIdx);
+	int		GetRandomVal(int);
 
 protected:
 	sCheData	m_sCheData;

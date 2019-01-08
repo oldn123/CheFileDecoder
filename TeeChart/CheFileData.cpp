@@ -466,6 +466,29 @@ void CCheFileData::ZoomWave(int nIdx, sJfItem & item, float fZoom)
 	}
 }
 
+bool CCheFileData::GetWaveTopByIdx(int nIdx, int & nTop)
+{
+	if (nIdx >= GetWaveCnt())
+	{
+		return false;
+	}
+	nTop = m_sCheData.sJfData2.verItems[nIdx].nTopHVal;
+	return true;
+}
+
+bool CCheFileData::GetWaveLiveTimeByIdx(int nIdx, double & fTimeLive)
+{
+	if (nIdx >= GetWaveCnt())
+	{
+		return false;
+	}
+
+	sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
+	assert(nIdx == item.nIdx1);
+	fTimeLive = item.fLiveTime;
+	return true;
+}
+
 bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 {
 	if (nIdx >= GetWaveCnt() || nTop  < 1)
@@ -505,9 +528,114 @@ void CCheFileData::ChangeTimes(DATE dtFrom)
 	}
 }
 
-bool CCheFileData::ChangeWaveTime(int, double tFrom, double tEnd, double tLive )
+int	CCheFileData::TestTimeRange(double tFrom, double tEnd, int butIdx)
 {
-	return false;
+	int nWaveCnt = GetWaveCnt();
+	int nConflictIdx = -1;
+	for (int i = 0; i < nWaveCnt; i++)
+	{
+		if (i == butIdx)
+		{
+			continue;
+		}
+		sJfItem sItem;
+		GetWaveByIdx(i, sItem);
+		if (tFrom >= sItem.fTimeFrom && tFrom <= sItem.fTimeTo)
+		{
+			nConflictIdx = i;
+			break;
+		}
+		if (tEnd >= sItem.fTimeFrom && tEnd <= sItem.fTimeTo)
+		{
+			nConflictIdx = i;
+			break;
+		}
+	}
+	return nConflictIdx;
+}
+
+bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd)
+{
+	int nWaveCnt = GetWaveCnt();
+	if (nIdx >= nWaveCnt)
+	{
+		return false;
+	}
+
+	int nConflictIdx = TestTimeRange(tFrom, tEnd, nIdx);
+	if (nConflictIdx >= 0)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+int	CCheFileData::GetRandomVal(int nBaseVal)
+{
+	double rval = rand() % 100 / (float)100;
+	nBaseVal += rval * 10;
+	return nBaseVal;
+}
+
+bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
+{
+	if (nIdx >= GetWaveCnt())
+	{
+		return false;
+	}
+
+	double fOldLive = 0;
+	if(!GetWaveLiveTimeByIdx(nIdx, fOldLive))
+	{
+		return false;
+	}
+
+	if ((float)tLive == (float)fOldLive)
+	{
+		return false;
+	}
+
+	double fOffset = tLive - fOldLive;
+	sJfItem sItem;
+	GetWaveByIdx(nIdx, sItem);
+
+	int nIdxFromOld = TimeToIdx(sItem.fTimeFrom);
+	int nIdxToOld = TimeToIdx(sItem.fTimeTo);
+
+	double tFrom = sItem.fTimeFrom + fOffset;
+	double tEnd = sItem.fTimeTo + fOffset;
+
+	int nConflictIdx = TestTimeRange(tFrom, tEnd, nIdx);
+	if (nConflictIdx >= 0)
+	{
+		return false;
+	}
+
+	int nIdxFrom = TimeToIdx(tFrom);
+	int nIdxTo = nIdxFrom + (nIdxToOld - nIdxFromOld);
+	DWORD * pDataBak = new DWORD[nIdxToOld - nIdxFromOld + 1];
+	for (int i = nIdxFromOld; i <= nIdxToOld; i++)
+	{
+		pDataBak[i - nIdxFromOld] = m_sCheData.verMainDatas.at(i);
+		m_sCheData.verMainDatas[i] = GetRandomVal(nIdxFromOld - 1);
+	}
+
+	for (int i = nIdxFrom; i <= nIdxTo; i++)
+	{
+		m_sCheData.verMainDatas[i] = pDataBak[i - nIdxFrom];
+	}
+
+	delete [] pDataBak;
+
+
+	sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
+	item.fLiveTime = (float)tLive;
+
+	m_sCheData.sJfData.verItems[nIdx].fTimeFrom = tFrom;
+	m_sCheData.sJfData.verItems[nIdx].fTimeTo = tEnd;
+
+	return true;
 }
 
 void CCheFileData::RemoveWave(int)
@@ -517,6 +645,7 @@ void CCheFileData::RemoveWave(int)
 
 void CCheFileData::Clear()
 {
+	srand(time(NULL));
 	m_nSaveDataFromIdx = 0;
 
 	memset(&m_sCheData.sVer[0], 0, 0x22);
