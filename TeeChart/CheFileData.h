@@ -21,19 +21,19 @@ struct sItemData
 
 struct sJfItem2
 {
-	WORD wUnKnow1;
-	DWORD dwUnknow1;
-	DWORD dwUnknow2;
-	DWORD dwUnknow3;
-	DWORD dwUnknow4;
-	
-	DWORD dwUnknow6;
-	DWORD dwUnknow7;
-	int	  nTopSqrt;
-	int	  nTopHVal;
-	int	  nTopHPos;			//顶部的位置
-	WORD  nIdx;
-	DWORD dwUnknow8;		// =0
+	WORD	wUnKnow1;
+	DWORD	dwUnknow1;
+	DWORD	dwUnknow2;
+	DWORD	dwUnknow3;
+
+	DWORD	dwUnknow7;
+	int		nTopSqrt;
+	int		nTopHVal;
+	int		nTopHPos;			//顶部的位置
+	int		nTopHFrom;			//峰起始高度
+	int		nTopHTo;			//峰终止高度
+	WORD	nIdx;
+	DWORD	dwUnknow8;		// =0
 };
 
 struct sItemData2
@@ -55,11 +55,12 @@ struct sJfItem3
 	int   nIdx2;
 	float fTopSqrt;
 	float fTopHVal;
+	float fTopWVal;		//峰宽
 
 	float fUnKonw3;
 	float fUnKonw4;
 	float fUnKonw5;
-	float fUnKonw6;
+
 	float fUnKonw7;
 	float fUnKonw8;
 
@@ -137,7 +138,7 @@ protected:
 	int		TimeToIdx(double);
 	double	IdxToTime(int);
 	int		TestTimeRange(double dFrom, double dTo, int butIdx);
-	int		GetRandomVal(int);
+	int		GetRandomVal(int, int, int nIdx, int nTimeRange);
 
 protected:
 	sCheData	m_sCheData;

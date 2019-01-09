@@ -104,9 +104,9 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 2)= si.dwUnknow1;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 6)= si.dwUnknow2;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A)	= si.dwUnknow3;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E)	= si.dwUnknow4;
+				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E)	= si.nTopHFrom;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x12)	= si.nTopHPos;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x16)	= si.dwUnknow6;
+				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x16)	= si.nTopHTo;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1A)	= si.dwUnknow7;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E)	= si.nTopSqrt;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x22)	= si.nTopHVal;
@@ -155,7 +155,7 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 				*(float*)&sTmp[0x10] = sItem.fUnKonw3;
 				*(float*)&sTmp[0x14] = sItem.fUnKonw4;
 				*(float*)&sTmp[0x18] = sItem.fUnKonw5;
-				*(float*)&sTmp[0x20] = sItem.fUnKonw6;
+				*(float*)&sTmp[0x20] = sItem.fTopWVal;
 				*(float*)&sTmp[0x24] = sItem.fUnKonw7;
 									
 				*(DWORD*)&sTmp[0x30] = sItem.dwUnkown1;		//0
@@ -284,9 +284,9 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				si.dwUnknow1= *(DWORD*)(&pJfDatas2[nItemFrom] + 2);
 				si.dwUnknow2= *(DWORD*)(&pJfDatas2[nItemFrom] + 6);
 				si.dwUnknow3= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A);
-				si.dwUnknow4= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E);
+				si.nTopHFrom= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E);
 				si.nTopHPos = *(DWORD*)(&pJfDatas2[nItemFrom] + 0x12);
-				si.dwUnknow6= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x16);
+				si.nTopHTo= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x16);
 				si.dwUnknow7= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x1A);
 				si.nTopSqrt= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E);
 				si.nTopHVal= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x22);
@@ -344,7 +344,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				sItem.fUnKonw3 = *(float*)&sTmp[0x10];
 				sItem.fUnKonw4 = *(float*)&sTmp[0x14];
 				sItem.fUnKonw5 = *(float*)&sTmp[0x18];
-				sItem.fUnKonw6 = *(float*)&sTmp[0x20];
+				sItem.fTopWVal = *(float*)&sTmp[0x20];
 				sItem.fUnKonw7 = *(float*)&sTmp[0x24];
 
 				sItem.dwUnkown1= *(DWORD*)&sTmp[0x30];		//0
@@ -571,11 +571,13 @@ bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd)
 	return true;
 }
 
-int	CCheFileData::GetRandomVal(int nBaseVal)
+int	CCheFileData::GetRandomVal(int nFrom, int nTo, int nIdx, int nTimeRange)
 {
-	double rval = rand() % 100 / (float)100;
-	nBaseVal += rval * 10;
-	return nBaseVal;
+	int nRange = nTo - nFrom + 1;
+	float fnode = nRange / nTimeRange;
+	//double rval = (int)rand() % (int)nRange;
+	nFrom += nIdx * fnode;
+	return nFrom;
 }
 
 bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
@@ -618,7 +620,8 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	for (int i = nIdxFromOld; i <= nIdxToOld; i++)
 	{
 		pDataBak[i - nIdxFromOld] = m_sCheData.verMainDatas.at(i);
-		m_sCheData.verMainDatas[i] = GetRandomVal(nIdxFromOld - 1);
+		m_sCheData.verMainDatas[i] = GetRandomVal(m_sCheData.verMainDatas.at(nIdxFromOld - 1), m_sCheData.verMainDatas.at(nIdxToOld + 1),
+			i - nIdxFromOld, nIdxToOld - nIdxFromOld + 1);
 	}
 
 	for (int i = nIdxFrom; i <= nIdxTo; i++)
