@@ -22,9 +22,9 @@ struct sItemData
 struct sJfItem2
 {
 	WORD	wUnKnow1;
-	DWORD	dwUnknow1;
-	DWORD	dwUnknow2;
-	DWORD	dwUnknow3;
+	int		nBeginDataIdx;			//波形起始数据的索引号	通过IdxToTime换算为时间
+	int		nTopDataIdx;			//波形峰顶的索引号		通过IdxToTime换算为时间
+	int		nEndDataIdx;			//波形结束数据的索引号	通过IdxToTime换算为时间
 
 	DWORD	dwUnknow7;
 	int		nTopSqrt;

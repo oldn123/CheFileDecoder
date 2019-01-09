@@ -101,9 +101,9 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 				sJfItem2 & si = m_sCheData.sJfData2.verItems[i];
 
 				*(WORD*)(&pJfDatas2[nItemFrom] + 0) = si.wUnKnow1;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 2)= si.dwUnknow1;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 6)= si.dwUnknow2;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A)	= si.dwUnknow3;
+				*(DWORD*)(&pJfDatas2[nItemFrom] + 2)= si.nBeginDataIdx;
+				*(DWORD*)(&pJfDatas2[nItemFrom] + 6)= si.nTopDataIdx;
+				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A)	= si.nEndDataIdx;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E)	= si.nTopHFrom;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x12)	= si.nTopHPos;
 				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x16)	= si.nTopHTo;
@@ -281,9 +281,10 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				int nItemFrom = 8 + i * 0x2C;
 				sJfItem2 si;
 				si.wUnKnow1 = *(WORD*)(&pJfDatas2[nItemFrom] + 0);
-				si.dwUnknow1= *(DWORD*)(&pJfDatas2[nItemFrom] + 2);
-				si.dwUnknow2= *(DWORD*)(&pJfDatas2[nItemFrom] + 6);
-				si.dwUnknow3= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A);
+				si.nBeginDataIdx = *(int*)(&pJfDatas2[nItemFrom] + 2);
+				si.nTopDataIdx= *(int*)(&pJfDatas2[nItemFrom] + 6);
+				si.nEndDataIdx= *(int*)(&pJfDatas2[nItemFrom] + 0x0A);
+
 				si.nTopHFrom= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E);
 				si.nTopHPos = *(DWORD*)(&pJfDatas2[nItemFrom] + 0x12);
 				si.nTopHTo= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x16);
@@ -531,6 +532,12 @@ void CCheFileData::ChangeTimes(DATE dtFrom)
 int	CCheFileData::TestTimeRange(double tFrom, double tEnd, int butIdx)
 {
 	int nWaveCnt = GetWaveCnt();
+	int nRangData = GetDataCnt();
+	if (TimeToIdx(tEnd) > nRangData - 1)
+	{
+		return -2;
+	}
+
 	int nConflictIdx = -1;
 	for (int i = 0; i < nWaveCnt; i++)
 	{
@@ -637,6 +644,11 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 
 	m_sCheData.sJfData.verItems[nIdx].fTimeFrom = tFrom;
 	m_sCheData.sJfData.verItems[nIdx].fTimeTo = tEnd;
+
+	sJfItem2 & item2 = m_sCheData.sJfData2.verItems[nIdx];
+	item2.nBeginDataIdx = nIdxFrom;
+	item2.nTopDataIdx = TimeToIdx(tLive);
+	item2.nEndDataIdx = nIdxTo;
 
 	return true;
 }
