@@ -513,6 +513,8 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 
 void CCheFileData::ChangeTimes(DATE dtFrom)
 {
+	COleDateTime dt = dtFrom;
+	CString s = dt.Format(L"%Y-%m_%d %H-%M-%S");
 	double ddiff = m_sCheData.dtOle2 - m_sCheData.dtOle1;
 	m_sCheData.dtOle1 = dtFrom;
 	if (m_sCheData.dtOle2)
