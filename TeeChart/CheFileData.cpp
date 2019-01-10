@@ -46,14 +46,12 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 			assert(0);
 		}
 		
-		//assert(*(int*)&m_sCheData.unKownBytes_2e[6] == m_sCheData.nDataCnt);
 		*(int*)&m_sCheData.unKownBytes_2e[6] = m_sCheData.nDataCnt;
 		fwrite(m_sCheData.unKownBytes_2e, 1, 0x2E, fp);
 
 		{
 			char sBuf[0x2C] = {0};
 			assert(m_sCheData.sJfData.wType == 3);
-			assert(m_sCheData.sJfData.nItemCnt == m_sCheData.sJfData.wItemCnt);	
 
 			*(DATE*)&sBuf[0] = (DATE)m_sCheData.dtOle1;
 			*(DATE*)&sBuf[8] = (DATE)m_sCheData.dtOle2;
@@ -63,113 +61,117 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 
 			*(WORD*)&sBuf[0x24] = m_sCheData.sJfData.wType;
 			*(WORD*)&sBuf[0x26] = m_sCheData.sJfData.wItemCnt;
-			*(WORD*)&sBuf[0x28] = m_sCheData.sJfData.nItemCnt;
+			*(DWORD*)&sBuf[0x28] = m_sCheData.sJfData.nItemCnt;
 			fwrite(sBuf, 1, 0x2C, fp);
 		}
 
+		if (m_sCheData.sJfData.wItemCnt > 0)
 		{
-			char * pJfDatas = new char[0x41 * 0x12];
-			memset(pJfDatas, 0, 0x41 * 0x12);
-			assert(m_sCheData.sJfData.nItemCnt == m_sCheData.sJfData.verItems.size());
-			for(int i = 0; i < m_sCheData.sJfData.nItemCnt; i++)
 			{
-				sJfItem & si = m_sCheData.sJfData.verItems[i];
-				*(float*)(&pJfDatas[i * 0x12] + 0) = si.fTimeFrom;
-				*(float*)(&pJfDatas[i * 0x12] + 4) = si.fTimeTo;
-				*(float*)(&pJfDatas[i * 0x12] + 8) = si.fPowerFrom;
-				*(float*)(&pJfDatas[i * 0x12] + 0x0C) = si.fPowerTo;
-				*(WORD*)(&pJfDatas[i * 0x12] + 0x10) = si.wUnKnow;
+				char * pJfDatas = new char[0x41 * 0x12];
+				memset(pJfDatas, 0, 0x41 * 0x12);
+				assert(m_sCheData.sJfData.nItemCnt == m_sCheData.sJfData.verItems.size());
+				for(int i = 0; i < m_sCheData.sJfData.nItemCnt; i++)
+				{
+					sJfItem & si = m_sCheData.sJfData.verItems[i];
+					*(float*)(&pJfDatas[i * 0x12] + 0) = si.fTimeFrom;
+					*(float*)(&pJfDatas[i * 0x12] + 4) = si.fTimeTo;
+					*(float*)(&pJfDatas[i * 0x12] + 8) = si.fPowerFrom;
+					*(float*)(&pJfDatas[i * 0x12] + 0x0C) = si.fPowerTo;
+					*(WORD*)(&pJfDatas[i * 0x12] + 0x10) = si.wUnKnow;
 
-				assert(si.wUnKnow == 0);
+					assert(si.wUnKnow == 0);
+				}
+				fwrite(pJfDatas, 0x12, 0x41, fp);	//总量
+				delete [] pJfDatas;
 			}
-			fwrite(pJfDatas, 0x12, 0x41, fp);	//总量
-			delete [] pJfDatas;
-		}
 
-		{
-			char * pJfDatas2 = new char[0x41 * 0x2C + 8];
-			memset(pJfDatas2, 0, 0x41 * 0x2C + 8);
-
-			*(WORD*)&pJfDatas2[0] = m_sCheData.sJfData2.wType;
-			*(WORD*)&pJfDatas2[2] = m_sCheData.sJfData2.wItemCnt;
-			*(WORD*)&pJfDatas2[4] = m_sCheData.sJfData2.nItemCnt;
-			assert(m_sCheData.sJfData2.nItemCnt == m_sCheData.sJfData2.verItems.size());
-
-			for(int i = 0; i < m_sCheData.sJfData2.nItemCnt; i++)
 			{
-				int nItemFrom = 8 + i * 0x2C;
-				sJfItem2 & si = m_sCheData.sJfData2.verItems[i];
+				char * pJfDatas2 = new char[0x41 * 0x2C + 8];
+				memset(pJfDatas2, 0, 0x41 * 0x2C + 8);
 
-				*(WORD*)(&pJfDatas2[nItemFrom] + 0) = si.wUnKnow1;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 2)= si.nBeginDataIdx;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 6)= si.nTopDataIdx;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A)	= si.nEndDataIdx;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E)	= si.nTopHFrom;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x12)	= si.nTopHPos;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x16)	= si.nTopHTo;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1A)	= si.dwUnknow7;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E)	= si.nTopSqrt;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x22)	= si.nTopHVal;
-				*(WORD*)(&pJfDatas2[nItemFrom] + 0x26)	= si.nIdx;
-				*(DWORD*)(&pJfDatas2[nItemFrom] + 0x28)	= si.dwUnknow8;		// =0
-				assert(si.dwUnknow8 == 0);
+				*(WORD*)&pJfDatas2[0] = m_sCheData.sJfData2.wType;
+				*(WORD*)&pJfDatas2[2] = m_sCheData.sJfData2.wItemCnt;
+				*(DWORD*)&pJfDatas2[4] = m_sCheData.sJfData2.nItemCnt;
+				assert(m_sCheData.sJfData2.nItemCnt == m_sCheData.sJfData2.verItems.size());
+
+				for(int i = 0; i < m_sCheData.sJfData2.nItemCnt; i++)
+				{
+					int nItemFrom = 8 + i * 0x2C;
+					sJfItem2 & si = m_sCheData.sJfData2.verItems[i];
+
+					*(WORD*)(&pJfDatas2[nItemFrom] + 0) = si.wUnKnow1;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 2)= si.nBeginDataIdx;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 6)= si.nTopDataIdx;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0A)	= si.nEndDataIdx;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x0E)	= si.nTopHFrom;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x12)	= si.nTopHPos;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x16)	= si.nTopHTo;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1A)	= si.dwUnknow7;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E)	= si.nTopSqrt;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x22)	= si.nTopHVal;
+					*(WORD*)(&pJfDatas2[nItemFrom] + 0x26)	= si.nIdx;
+					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x28)	= si.dwUnknow8;		// =0
+					assert(si.dwUnknow8 == 0);
+				}
+				fwrite(pJfDatas2, 1, 0x41 * 0x2C + 8, fp);	//总量
+				delete [] pJfDatas2;
 			}
-			fwrite(pJfDatas2, 1, 0x41 * 0x2C + 8, fp);	//总量
-			delete [] pJfDatas2;
 		}
-
+		
 		{
 			char buf[0x12] = {0};
 			char * pBuf = &buf[0];
 
 			*(WORD*)&pBuf[0] = m_sCheData.sJgData.wType;
 			*(WORD*)&pBuf[2] = m_sCheData.sJgData.wItemCnt;
-			*(WORD*)&pBuf[4] = m_sCheData.sJgData.nItemCnt;
+			*(DWORD*)&pBuf[4] = m_sCheData.sJgData.nItemCnt;
 			memcpy(&pBuf[8], m_sCheData.sJgData.unKownBytes_0a, 0x0a);
 			fwrite(pBuf, 1, 0x12, fp);	//总量
 
-			assert(m_sCheData.sJgData.nItemCnt == m_sCheData.sJgData.verItems.size());
-			USES_CONVERSION;
-			for (int i = 0; i < m_sCheData.sJgData.nItemCnt; i++)
+			if (m_sCheData.sJgData.wItemCnt > 0)
 			{
-				sJfItem3 & sItem = m_sCheData.sJgData.verItems.at(i);
-				WORD wNameCnt = ((CStringA)sItem.sGroupName).GetLength();
-				fwrite(&wNameCnt, 1, 2, fp);	//总量
+				assert(m_sCheData.sJgData.nItemCnt == m_sCheData.sJgData.verItems.size());
+				USES_CONVERSION;
+				for (int i = 0; i < m_sCheData.sJgData.nItemCnt; i++)
+				{
+					sJfItem3 & sItem = m_sCheData.sJgData.verItems.at(i);
+					WORD wNameCnt = ((CStringA)sItem.sGroupName).GetLength();
+					fwrite(&wNameCnt, 1, 2, fp);	//总量
 
-				fwrite(((CStringA)sItem.sGroupName).GetBuffer(), 1, wNameCnt, fp);
+					fwrite(((CStringA)sItem.sGroupName).GetBuffer(), 1, wNameCnt, fp);
 
-				char sTmp[0x3C] = {0};
-				
-				*(float*)&sTmp[0x08] = sItem.fLiveTime;		//保留时间
+					char sTmp[0x3C] = {0};
 
-				*(float*)&sTmp[0x0C] = sItem.fContentsVal;	
+					*(float*)&sTmp[0x08] = sItem.fLiveTime;		//保留时间
 
-				*(float*)&sTmp[0x1C] = sItem.fLivePower;	//保留时间对应的电压
-				*(int*)&sTmp[0x28] = sItem.nIdx1;	//	
-				*(int*)&sTmp[0x2C] = sItem.nIdx2;	//
+					*(float*)&sTmp[0x0C] = sItem.fContentsVal;	
 
-				assert(sItem.nIdx1 == sItem.nIdx2);
+					*(float*)&sTmp[0x1C] = sItem.fLivePower;	//保留时间对应的电压
+					*(int*)&sTmp[0x28] = sItem.nIdxMatch;	//	
+					*(int*)&sTmp[0x2C] = sItem.nIdx;	//
 
-				*(float*)&sTmp[0x00] = sItem.fTopSqrt;
-				*(float*)&sTmp[0x04] = sItem.fTopHVal;
-				*(float*)&sTmp[0x10] = sItem.fUnKonw3;
-				*(float*)&sTmp[0x14] = sItem.fUnKonw4;
-				*(float*)&sTmp[0x18] = sItem.fUnKonw5;
-				*(float*)&sTmp[0x20] = sItem.fTopWVal;
-				*(float*)&sTmp[0x24] = sItem.fUnKonw7;
-									
-				*(DWORD*)&sTmp[0x30] = sItem.dwUnkown1;		//0
-				*(DWORD*)&sTmp[0x34] = sItem.dwUnkown2;		//-1
-				assert(sItem.dwUnkown1 == 0);
-				assert(sItem.dwUnkown2 == 0xffffffff);
+					*(float*)&sTmp[0x00] = sItem.fTopSqrt;
+					*(float*)&sTmp[0x04] = sItem.fTopHVal;
+					*(float*)&sTmp[0x10] = sItem.fUnKonw3;
+					*(float*)&sTmp[0x14] = sItem.fUnKonw4;
+					*(float*)&sTmp[0x18] = sItem.fUnKonw5;
+					*(float*)&sTmp[0x20] = sItem.fTopWVal;
+					*(float*)&sTmp[0x24] = sItem.fUnKonw7;
 
-				*(float*)&sTmp[0x38] = sItem.fUnKonw8;
-				
-				fwrite(sTmp, 1, 0x3C, fp);
-			}
-		}
-		
-		fwrite(m_sCheData.unKownBytes_aa, 1, 0xaa, fp);
+					*(DWORD*)&sTmp[0x30] = sItem.dwUnkown1;		//0
+					*(DWORD*)&sTmp[0x34] = sItem.dwUnkown2;		//-1
+					assert(sItem.dwUnkown1 == 0);
+					assert(sItem.dwUnkown2 == 0xffffffff);
+
+					*(float*)&sTmp[0x38] = sItem.fUnKonw8;
+
+					fwrite(sTmp, 1, 0x3C, fp);
+				}
+				fwrite(m_sCheData.unKownBytes_5e, 1, 0x5e, fp);
+			}		
+		}		
+		fwrite(m_sCheData.unKownBytes_4c, 1, 0x4c, fp);
 
 	} while (false);
 
@@ -239,18 +241,19 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 
 			m_sCheData.sJfData.wType = *(WORD*)&sBuf[0x24];
 			m_sCheData.sJfData.wItemCnt = *(WORD*)&sBuf[0x26];
-			m_sCheData.sJfData.nItemCnt = *(WORD*)&sBuf[0x28];
+			m_sCheData.sJfData.nItemCnt = *(DWORD*)&sBuf[0x28];
 		}
 
 		assert(m_sCheData.sJfData.wType == 3);
-		assert(m_sCheData.sJfData.nItemCnt == m_sCheData.sJfData.wItemCnt);
+	//	assert(m_sCheData.sJfData.nItemCnt == m_sCheData.sJfData.wItemCnt);
 
+		if (m_sCheData.sJfData.wItemCnt > 0)
 		{
 			char * pJfDatas = new char[0x41 * 0x12];
 
 			fread(pJfDatas, 0x12, 0x41, fp);	//总量
 			
-			for(int i = 0; i < m_sCheData.sJfData.nItemCnt; i++)
+			for(int i = 0; i < m_sCheData.sJfData.wItemCnt; i++)
 			{
 				sJfItem si;
 				si.fTimeFrom = *(float*)(&pJfDatas[i * 0x12] + 0);
@@ -265,18 +268,16 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 			}
 
 			delete [] pJfDatas;
-		}
-
-		{
+			
 			char * pJfDatas2 = new char[0x41 * 0x2C + 8];
 
 			fread(pJfDatas2, 1, 0x41 * 0x2C + 8, fp);	//总量
 
 			m_sCheData.sJfData2.wType = *(WORD*)&pJfDatas2[0];
 			m_sCheData.sJfData2.wItemCnt = *(WORD*)&pJfDatas2[2];
-			m_sCheData.sJfData2.nItemCnt = *(WORD*)&pJfDatas2[4];
+			m_sCheData.sJfData2.nItemCnt = *(DWORD*)&pJfDatas2[4];
 			m_sCheData.fTopSqrtTotal = 0;
-			for(int i = 0; i < m_sCheData.sJfData2.nItemCnt; i++)
+			for(int i = 0; i < m_sCheData.sJfData2.wItemCnt; i++)
 			{
 				int nItemFrom = 8 + i * 0x2C;
 				sJfItem2 si;
@@ -307,59 +308,61 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 			char buf[0x12] = {0};
 			char * pBuf = &buf[0];
 
-			fread(pBuf, 1, 0x12, fp);	//总量
+			fread(pBuf, 1, 0x12, fp);	
 
 			m_sCheData.sJgData.wType = *(WORD*)&pBuf[0];
 			m_sCheData.sJgData.wItemCnt = *(WORD*)&pBuf[2];
-			m_sCheData.sJgData.nItemCnt = *(WORD*)&pBuf[4];
+			m_sCheData.sJgData.nItemCnt = *(DWORD*)&pBuf[4];
 			memcpy(m_sCheData.sJgData.unKownBytes_0a, &pBuf[8], 0x0a);
 
-			USES_CONVERSION;
-			for (int i = 0; i < m_sCheData.sJgData.nItemCnt; i++)
+			if (m_sCheData.sJgData.wItemCnt > 0)
 			{
-				sJfItem3 sItem;
-				WORD wNameCnt = 0;
-				fread(&wNameCnt, 1, 2, fp);	//总量
-				
-				char sName[200] = {0};
-				fread(sName, 1, wNameCnt, fp);
-				sName[wNameCnt] = 0;
+				USES_CONVERSION;
+				for (int i = 0; i < m_sCheData.sJgData.wItemCnt; i++)
+				{
+					sJfItem3 sItem;
+					WORD wNameCnt = 0;
+					fread(&wNameCnt, 1, 2, fp);	//总量
 
-				sItem.sGroupName = A2T(sName);
+					char sName[200] = {0};
+					fread(sName, 1, wNameCnt, fp);
+					sName[wNameCnt] = 0;
 
-				char sTmp[0x3C] = {0};
-				fread(sTmp, 1, 0x3C, fp);
+					sItem.sGroupName = A2T(sName);
 
-				sItem.fLiveTime = *(float*)&sTmp[0x08];		//保留时间
-				
-				sItem.fContentsVal = *(float*)&sTmp[0x0C];	
+					char sTmp[0x3C] = {0};
+					fread(sTmp, 1, 0x3C, fp);
 
-				sItem.fLivePower = *(float*)&sTmp[0x1C];	//保留时间对应的电压
-				sItem.nIdx1 = *(int*)&sTmp[0x28];	//	
-				sItem.nIdx2 = *(int*)&sTmp[0x2C];	//
+					sItem.fLiveTime = *(float*)&sTmp[0x08];		//保留时间
 
-				assert(sItem.nIdx1 == sItem.nIdx2);
+					sItem.fContentsVal = *(float*)&sTmp[0x0C];	
 
-				sItem.fTopSqrt = *(float*)&sTmp[0x00];
-				sItem.fTopHVal = *(float*)&sTmp[0x04];
-				sItem.fUnKonw3 = *(float*)&sTmp[0x10];
-				sItem.fUnKonw4 = *(float*)&sTmp[0x14];
-				sItem.fUnKonw5 = *(float*)&sTmp[0x18];
-				sItem.fTopWVal = *(float*)&sTmp[0x20];
-				sItem.fUnKonw7 = *(float*)&sTmp[0x24];
+					sItem.fLivePower = *(float*)&sTmp[0x1C];	//保留时间对应的电压
+					sItem.nIdxMatch = *(int*)&sTmp[0x28];	//	
+					sItem.nIdx = *(int*)&sTmp[0x2C];	//
 
-				sItem.dwUnkown1= *(DWORD*)&sTmp[0x30];		//0
-				sItem.dwUnkown2= *(DWORD*)&sTmp[0x34];		//-1
-				assert(sItem.dwUnkown1 == 0);
-				assert(sItem.dwUnkown2 == 0xffffffff);
+					sItem.fTopSqrt = *(float*)&sTmp[0x00];
+					sItem.fTopHVal = *(float*)&sTmp[0x04];
+					sItem.fUnKonw3 = *(float*)&sTmp[0x10];
+					sItem.fUnKonw4 = *(float*)&sTmp[0x14];
+					sItem.fUnKonw5 = *(float*)&sTmp[0x18];
+					sItem.fTopWVal = *(float*)&sTmp[0x20];
+					sItem.fUnKonw7 = *(float*)&sTmp[0x24];
 
-				sItem.fUnKonw8 = *(float*)&sTmp[0x38];
-				m_sCheData.sJgData.verItems.push_back(sItem);
-			}
+					sItem.dwUnkown1= *(DWORD*)&sTmp[0x30];		//0
+					sItem.dwUnkown2= *(DWORD*)&sTmp[0x34];		//-1
+					assert(sItem.dwUnkown1 == 0);
+					assert(sItem.dwUnkown2 == 0xffffffff);
+
+					sItem.fUnKonw8 = *(float*)&sTmp[0x38];
+					m_sCheData.sJgData.verItems.push_back(sItem);
+				}
+				int nreal = fread(m_sCheData.unKownBytes_5e, 1, 0x5e, fp);
+				assert(nreal == 0x5e);
+			}		
 		}
-
-		int nreal = fread(m_sCheData.unKownBytes_aa, 1, 0xaa, fp);	//总量
-		assert(nreal == 0xaa);
+		int nreal = fread(m_sCheData.unKownBytes_4c, 1, 0x4c, fp);
+		assert(nreal == 0x4c);
 
 	} while (false);
 
@@ -485,7 +488,7 @@ bool CCheFileData::GetWaveLiveTimeByIdx(int nIdx, double & fTimeLive)
 	}
 
 	sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
-	assert(nIdx == item.nIdx1);
+	assert(nIdx == item.nIdx);
 	fTimeLive = item.fLiveTime;
 	return true;
 }
@@ -701,7 +704,8 @@ void CCheFileData::Clear()
 	m_sCheData.sJgData.wType = 0;
 	m_sCheData.sJgData.wItemCnt = 0;
 	memset(&m_sCheData.sJgData.unKownBytes_0a[0], 0, 0x0a);
-	memset(&m_sCheData.unKownBytes_aa[0], 0, 0x0aa);
+	memset(&m_sCheData.unKownBytes_5e[0], 0, 0x5e);
+	memset(&m_sCheData.unKownBytes_4c[0], 0, 0x4c);
 	m_sCheData.sJgData.verItems.clear();
 
 	m_sCheData.fTopSqrtTotal = 0;

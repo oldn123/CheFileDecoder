@@ -51,8 +51,8 @@ struct sJfItem3
 	float fContentsVal;	//含量
 	float fLiveTime;	//保留时间
 	float fLivePower;	//保留时间对应的电压
-	int   nIdx1;
-	int   nIdx2;
+	int   nIdxMatch;	//匹配积分item
+	int   nIdx;
 	float fTopSqrt;
 	float fTopHVal;
 	float fTopWVal;		//峰宽
@@ -95,7 +95,8 @@ struct sCheData
 	sItemData	sJfData;
 	sItemData2	sJfData2;
 	sItemData3  sJgData;	//结果数据
-	BYTE unKownBytes_aa[0xaa];
+	BYTE unKownBytes_5e[0x5e];
+	BYTE unKownBytes_4c[0x4c];
 	//
 	float fTopSqrtTotal;
 };
