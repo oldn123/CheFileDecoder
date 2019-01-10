@@ -593,17 +593,20 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 {
 	if (nIdx >= GetWaveCnt())
 	{
+		m_lastErr = L"超出数据范围";
 		return false;
 	}
 
 	double fOldLive = 0;
 	if(!GetWaveLiveTimeByIdx(nIdx, fOldLive))
-	{
+	{	
+		m_lastErr = L"获取保留时间失败";
 		return false;
 	}
 
 	if ((float)tLive == (float)fOldLive)
 	{
+		m_lastErr = L"";
 		return false;
 	}
 
@@ -620,6 +623,12 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	int nConflictIdx = TestTimeRange(tFrom, tEnd, nIdx);
 	if (nConflictIdx >= 0)
 	{
+		m_lastErr = L"波形重合，数据文件不支持此类型";
+		return false;
+	}
+	if(nConflictIdx == -2)
+	{
+		m_lastErr = L"保留时间超出最大值，不允许";
 		return false;
 	}
 

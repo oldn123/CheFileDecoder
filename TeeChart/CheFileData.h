@@ -132,6 +132,8 @@ public:
 	bool	ChangeWaveTimePos(int, double tLive );
 	void	RemoveWave(int);
 
+	CString GetLastErr(){return m_lastErr;}
+
 protected:
 	void	Clear();
 	void	ZoomWave(int nIdx, sJfItem & item, float fZoom);
@@ -146,5 +148,6 @@ protected:
 
 protected:
 	int			m_nSaveDataFromIdx;
+	CString		m_lastErr;
 };
 
