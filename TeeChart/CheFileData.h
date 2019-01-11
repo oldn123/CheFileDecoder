@@ -114,7 +114,9 @@ public:
 
 public:
 	void	ChangeTimes(DATE dtCreate);
-	
+	static long	DataToValue(long);
+	static long	ValueToData(long);
+
 	int		GetDataCnt();
 	bool	GetDataByIdx(int, double & );
 	bool	SetDataByIdx(int, double);
@@ -131,13 +133,13 @@ public:
 
 	bool	ChangeWaveTimeRange(int, double tFrom, double tEnd);
 	bool	ChangeWaveTimePos(int, double tLive );
-	void	RemoveWave(int);
-
+	void	NormalizeWave(int);
+	bool	ResetStdWave(int nWaveIdx, int nFromIdx, int nToIdx, long lTop);
 	CString GetLastErr(){return m_lastErr;}
 
 protected:
 	void	Clear();
-	void	ZoomWave(int nIdx, sJfItem & item, float fZoom);
+	void	ZoomWave(int nIdx, float fZoom);
 	int		TimeToIdx(double);
 	double	IdxToTime(int);
 	int		TestTimeRange(double dFrom, double dTo, int butIdx);
