@@ -130,7 +130,7 @@ public:
 	bool	GetWaveLiveTimeByIdx(int, double & );
 	bool	GetWaveTopByIdx(int, int & );
 	bool	ChangeWaveTop(int, int );
-
+	bool	ChangeWaveTimeWidth(int, double tWidth);
 	bool	ChangeWaveTimeRange(int, double tFrom, double tEnd);
 	bool	ChangeWaveTimePos(int, double tLive );
 	void	NormalizeWave(int);
