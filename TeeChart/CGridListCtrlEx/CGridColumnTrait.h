@@ -84,7 +84,7 @@ public:
 	virtual CWnd* OnEditBegin(CGridListCtrlEx& owner, int nRow, int nCol, CPoint pt) { return OnEditBegin(owner, nRow, nCol); }
 
 	//! Override OnEditEnd() in case one need to change state after a cell-edit.
-	virtual void OnEditEnd(int nRow, int nCol, LPCTSTR) {}
+	virtual void OnEditEnd(int nRow, int nCol, LPTSTR) {}
 
 	//! Override OnSortRows() to provide your own special row sorting
 	//!

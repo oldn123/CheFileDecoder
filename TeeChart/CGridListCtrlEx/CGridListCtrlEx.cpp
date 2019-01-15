@@ -2356,13 +2356,22 @@ CWnd* CGridListCtrlEx::OnEditBegin(int nRow, int nCol, CPoint pt)
 bool CGridListCtrlEx::OnEditComplete(int nRow, int nCol, CWnd* pEditor, LV_DISPINFO* pLVDI)
 {
 	CGridColumnTrait* pTrait = GetCellColumnTrait(nRow, nCol);
+	bool bret = true;
 	if (pTrait != NULL)
 	{
 		CString sText;
 		if (pEditor)
 		{
 			pEditor->GetWindowText(sText);
-			pTrait->OnEditEnd(nRow, nCol, sText);
+			TCHAR sBuf[MAX_PATH];
+			_tcscpy(sBuf, (LPCTSTR)sText);
+			pTrait->OnEditEnd(nRow, nCol, sBuf);
+			if (sText != sBuf)
+			{
+				bret = false;
+				sText = sBuf;
+				pEditor->SetWindowText(sText);
+			}
 		}	
 	}
 	if (pLVDI == NULL)
@@ -2370,7 +2379,7 @@ bool CGridListCtrlEx::OnEditComplete(int nRow, int nCol, CWnd* pEditor, LV_DISPI
 
 	const bool txtEdit = pLVDI->item.mask & LVIF_TEXT && pLVDI->item.pszText != NULL;
 	const bool imgEdit = pLVDI->item.mask & LVIF_IMAGE && pLVDI->item.iImage != I_IMAGECALLBACK;
-	return txtEdit || imgEdit;	// Accept edit
+	return bret && (txtEdit || imgEdit);	// Accept edit
 }
 
 //------------------------------------------------------------------------
