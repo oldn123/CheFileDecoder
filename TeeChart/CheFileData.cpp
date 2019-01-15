@@ -578,6 +578,23 @@ bool CCheFileData::ResetStdWave(int nWaveIdx, int nFromIdx, int nToIdx, long lTo
 // 	return true;
 // }
 
+bool CCheFileData::ChangeWaveSqrt(int nIdx, int nSqrt)
+{
+	if (nIdx >= GetWaveCnt() || nSqrt  < 1)
+	{
+		return false;
+	}
+
+	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nIdx);
+	int nOld = sItem.nTopSqrt;
+	sItem.nTopSqrt = nSqrt;
+
+
+	m_sCheData.fTopSqrtTotal += (nSqrt - nOld);
+
+	return true;
+}
+
 bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 {
 	if (nIdx >= GetWaveCnt() || nTop  < 1)

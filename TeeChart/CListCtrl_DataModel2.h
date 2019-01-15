@@ -52,7 +52,7 @@ struct CListCtrl_DataRecord2
 		}
 	}
 
-	int  GetColCount() const { return 7; }
+	int  GetColCount() const { return 6; }
 };
 
 class CListCtrl_DataModel2 : public IDataModelForList
