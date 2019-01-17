@@ -647,6 +647,13 @@ int	CCheFileData::TestTimeRange(double tFrom, double tEnd, int butIdx)
 	int nRangData = GetDataCnt();
 	if (TimeToIdx(tEnd) > nRangData - 1)
 	{
+		m_lastErr = L"超越最大值";
+		return -2;
+	}
+
+	if (tFrom < 0)
+	{
+		m_lastErr = L"低于最小值";
 		return -2;
 	}
 
@@ -961,7 +968,7 @@ bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd)
 	}
 
 	int nConflictIdx = TestTimeRange(tFrom, tEnd, nIdx);
-	if (nConflictIdx >= 0)
+	if (nConflictIdx >= 0 || nConflictIdx < -1)
 	{
 		return false;
 	}
