@@ -137,6 +137,7 @@ public:
 	bool	ChangeWaveTimeRange(int, double tFrom, double tEnd);
 	bool	ChangeWaveTimePos(int, double tLive );
 	void	NormalizeWave(int);
+	void	FixWaveEdge(int);
 	bool	ResetStdWave(int nWaveIdx, int nFromIdx, int nToIdx, long lTop);
 	CString GetLastErr(){return m_lastErr;}
 

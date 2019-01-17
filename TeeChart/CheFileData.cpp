@@ -526,6 +526,64 @@ void GetWavePoints(int nHeight, int nFrom, int nTo, long * aPoint)
 	}
 }
 
+void CCheFileData::FixWaveEdge(int nWaveIdx)
+{
+	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nWaveIdx);
+	int nIdxFrom = sItem.nBeginDataIdx;
+	int nIdxTo = sItem.nEndDataIdx;
+
+	int nEndPos1 = 0;
+	int nEndPos2 = m_sCheData.nDataCnt;
+
+	int w1 = nWaveIdx - 1;
+	int w2 = nWaveIdx + 1;
+	if (w1 > 0)
+	{
+		nEndPos1 = m_sCheData.sJfData2.verItems.at(w1).nEndDataIdx + 2;
+	}
+
+	if (w2 < m_sCheData.sJfData2.verItems.size())
+	{
+		nEndPos2 = m_sCheData.sJfData2.verItems.at(w2).nBeginDataIdx - 2;
+	}
+#define val_offset 8
+	for (int i = nIdxFrom; i > nEndPos1 + 1; i--)
+	{
+		double d1, d2;
+		GetDataByIdx(i, d1);
+		GetDataByIdx(i+1, d2);
+		if (abs(d1 - d2) > val_offset)
+		{
+			if (d2 > d1)
+			{
+				SetDataByIdx(i+1, d1+val_offset);
+			}
+			else
+			{
+				SetDataByIdx(i+1, d1-val_offset);
+			}
+		}
+	}
+
+	for (int i = nIdxTo; i < nEndPos2 - 1; i++)
+	{
+		double d1, d2;
+		GetDataByIdx(i, d1);
+		GetDataByIdx(i+1, d2);
+		if (abs(d1 - d2) > val_offset)
+		{
+			if (d2 > d1)
+			{
+				SetDataByIdx(i+1, d1+val_offset);
+			}
+			else
+			{
+				SetDataByIdx(i+1, d1-val_offset);
+			}
+		}
+	}
+}
+
 void CCheFileData::NormalizeWave(int nWaveIdx)
 {
 	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nWaveIdx);
@@ -1100,6 +1158,8 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	item2.nBeginDataIdx = nIdxFrom;
 	item2.nTopDataIdx = TimeToIdx(tLive);
 	item2.nEndDataIdx = nIdxTo;
+
+	FixWaveEdge(nIdx);
 
 	return true;
 }
