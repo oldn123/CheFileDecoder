@@ -72,8 +72,8 @@ struct sItemData3
 {
 	WORD wType;
 	WORD wItemCnt;
-	int nItemCnt;
-	BYTE unKownBytes_0a[0x0a];
+	BYTE unKownBytes_06[0x06];
+	BYTE unKownBytes_08[0x08];
 	vector<sJfItem3>	verItems;
 };
 
@@ -96,8 +96,9 @@ struct sCheData
 	sItemData2	sJfData2;
 	sItemData3  sJgData;	//结果数据
 	BYTE unKownBytes_5e[0x5e];
-	BYTE unKownBytes_4c[0x4c];
+	BYTE unKownBytes_end[0x100];	//0x54 , 0x4c 变长结尾数据，没做细分析，增加变量存储长度
 	//
+	int	nEndByesCnt;
 	float fTopSqrtTotal;
 };
 

@@ -121,20 +121,24 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 		}
 		
 		{
-			char buf[0x12] = {0};
+			char buf[0x0a] = {0};
 			char * pBuf = &buf[0];
 
 			*(WORD*)&pBuf[0] = m_sCheData.sJgData.wType;
 			*(WORD*)&pBuf[2] = m_sCheData.sJgData.wItemCnt;
-			*(DWORD*)&pBuf[4] = m_sCheData.sJgData.nItemCnt;
-			memcpy(&pBuf[8], m_sCheData.sJgData.unKownBytes_0a, 0x0a);
-			fwrite(pBuf, 1, 0x12, fp);	//总量
+			memcpy(&pBuf[4], m_sCheData.sJgData.unKownBytes_06, 0x06);
+			fwrite(pBuf, 1, 0x0a, fp);	
 
 			if (m_sCheData.sJgData.wItemCnt > 0)
 			{
-				assert(m_sCheData.sJgData.nItemCnt == m_sCheData.sJgData.verItems.size());
+				char _buf[0x08] = {0};
+				pBuf = &_buf[0];
+				memcpy(&pBuf[0], m_sCheData.sJgData.unKownBytes_08, 0x08);
+				fwrite(pBuf, 1, 0x08, fp);	
+
+				assert(m_sCheData.sJgData.wItemCnt == m_sCheData.sJgData.verItems.size());
 				USES_CONVERSION;
-				for (int i = 0; i < m_sCheData.sJgData.nItemCnt; i++)
+				for (int i = 0; i < m_sCheData.sJgData.wItemCnt; i++)
 				{
 					sJfItem3 & sItem = m_sCheData.sJgData.verItems.at(i);
 					WORD wNameCnt = ((CStringA)sItem.sGroupName).GetLength();
@@ -172,7 +176,8 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 				fwrite(m_sCheData.unKownBytes_5e, 1, 0x5e, fp);
 			}		
 		}		
-		fwrite(m_sCheData.unKownBytes_4c, 1, 0x4c, fp);
+		assert(m_sCheData.nEndByesCnt != 0);
+		fwrite(m_sCheData.unKownBytes_end, 1, m_sCheData.nEndByesCnt, fp);
 
 	} while (false);
 
@@ -246,7 +251,6 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 		}
 
 		assert(m_sCheData.sJfData.wType == 3);
-	//	assert(m_sCheData.sJfData.nItemCnt == m_sCheData.sJfData.wItemCnt);
 
 		if (m_sCheData.sJfData.wItemCnt > 0)
 		{
@@ -306,24 +310,26 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 		}
 
 		{
-			char buf[0x12] = {0};
+			char buf[0x0a] = {0};
 			char * pBuf = &buf[0];
 
-			fread(pBuf, 1, 0x12, fp);	
+			fread(pBuf, 1, 0x0a, fp);	
 
 			m_sCheData.sJgData.wType = *(WORD*)&pBuf[0];
+			assert(m_sCheData.sJgData.wType == 0x11);
 			m_sCheData.sJgData.wItemCnt = *(WORD*)&pBuf[2];
-			m_sCheData.sJgData.nItemCnt = *(DWORD*)&pBuf[4];
-			memcpy(m_sCheData.sJgData.unKownBytes_0a, &pBuf[8], 0x0a);
+			memcpy(m_sCheData.sJgData.unKownBytes_06, &pBuf[4], 0x06);
 
 			if (m_sCheData.sJgData.wItemCnt > 0)
 			{
+				fread(m_sCheData.sJgData.unKownBytes_08, 1, 0x08, fp);	
+				
 				USES_CONVERSION;
 				for (int i = 0; i < m_sCheData.sJgData.wItemCnt; i++)
 				{
 					sJfItem3 sItem;
 					WORD wNameCnt = 0;
-					fread(&wNameCnt, 1, 2, fp);	//总量
+					fread(&wNameCnt, 1, 2, fp);	//长度
 
 					char sName[200] = {0};
 					fread(sName, 1, wNameCnt, fp);
@@ -362,8 +368,9 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				assert(nreal == 0x5e);
 			}		
 		}
-		int nreal = fread(m_sCheData.unKownBytes_4c, 1, 0x4c, fp);
-		assert(nreal == 0x4c);
+
+		m_sCheData.nEndByesCnt = fread(m_sCheData.unKownBytes_end, 1, 0x100, fp);
+		assert(m_sCheData.nEndByesCnt > 0 && m_sCheData.nEndByesCnt < 0x100);
 
 	} while (false);
 
@@ -525,10 +532,12 @@ void CCheFileData::NormalizeWave(int nWaveIdx)
 	int nIdxFrom = sItem.nBeginDataIdx;
 	int nIdxTo = sItem.nEndDataIdx;
 
+	double dv1, dv2;
+	GetDataByIdx(nIdxFrom - 1, dv1);
+	GetDataByIdx(nIdxTo + 1, dv2);
 	for (int i = nIdxFrom; i <= nIdxTo; i++)
 	{
-		m_sCheData.verMainDatas[i] = GetRandomVal(m_sCheData.verMainDatas.at(nIdxFrom - 1), m_sCheData.verMainDatas.at(nIdxFrom + 1),
-			i - nIdxFrom, nIdxTo - nIdxFrom);
+		SetDataByIdx(i, GetRandomVal(dv1, dv2, i - nIdxFrom, nIdxTo - nIdxFrom));
 	}
 }
 
@@ -1014,8 +1023,8 @@ int	CCheFileData::GetRandomVal(int nFrom, int nTo, int nIdx, int nTimeRange)
 {
 	int nRange = nTo - nFrom + 1;
 	float fnode = nRange / nTimeRange;
-	//double rval = (int)rand() % (int)nRange;
-	nFrom += nIdx * fnode;
+	double rval = (int)rand() % (int)10 - 5;
+	nFrom += (nIdx * fnode  + rval);
 	return nFrom;
 }
 
@@ -1064,21 +1073,22 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 
 	int nIdxFrom = TimeToIdx(tFrom);
 	int nIdxTo = nIdxFrom + (nIdxToOld - nIdxFromOld);
-	DWORD * pDataBak = new DWORD[nIdxToOld - nIdxFromOld + 1];
+	int * pDataBak = new int[nIdxToOld - nIdxFromOld + 1];
 	for (int i = nIdxFromOld; i <= nIdxToOld; i++)
 	{
-		pDataBak[i - nIdxFromOld] = m_sCheData.verMainDatas.at(i);
-		m_sCheData.verMainDatas[i] = GetRandomVal(m_sCheData.verMainDatas.at(nIdxFromOld - 1), m_sCheData.verMainDatas.at(nIdxToOld + 1),
-			i - nIdxFromOld, nIdxToOld - nIdxFromOld + 1);
+		double dv = 0;
+		GetDataByIdx(i, dv);
+		pDataBak[i - nIdxFromOld] = dv;
 	}
+
+	NormalizeWave(nIdx);
 
 	for (int i = nIdxFrom; i <= nIdxTo; i++)
 	{
-		m_sCheData.verMainDatas[i] = pDataBak[i - nIdxFrom];
+		SetDataByIdx(i, pDataBak[i - nIdxFrom]);
 	}
 
 	delete [] pDataBak;
-
 
 	sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
 	item.fLiveTime = (float)tLive;
@@ -1121,13 +1131,15 @@ void CCheFileData::Clear()
 	m_sCheData.sJfData2.wType = 0;
 	m_sCheData.sJfData2.wItemCnt = 0;
 	m_sCheData.sJfData2.verItems.clear();
-
-	m_sCheData.sJgData.nItemCnt = 0;
+	
 	m_sCheData.sJgData.wType = 0;
 	m_sCheData.sJgData.wItemCnt = 0;
-	memset(&m_sCheData.sJgData.unKownBytes_0a[0], 0, 0x0a);
+	memset(&m_sCheData.sJgData.unKownBytes_06[0], 0, 6);
+	memset(&m_sCheData.sJgData.unKownBytes_08[0], 0, 8);
+
 	memset(&m_sCheData.unKownBytes_5e[0], 0, 0x5e);
-	memset(&m_sCheData.unKownBytes_4c[0], 0, 0x4c);
+	memset(&m_sCheData.unKownBytes_end[0], 0, 0x100);
+	m_sCheData.nEndByesCnt = 0;
 	m_sCheData.sJgData.verItems.clear();
 
 	m_sCheData.fTopSqrtTotal = 0;
