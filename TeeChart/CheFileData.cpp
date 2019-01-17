@@ -657,7 +657,10 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 
 	int nIdxFrom = sItem.nBeginDataIdx;
 	int nIdxTo = sItem.nTopDataIdx;
+	double dMin = 0;
+	GetDataByIdx(sItem.nBeginDataIdx, dMin);
 	vector<double> arrDataZoom;
+	double dLast = -9999;
 	for (int i = nIdxFrom ; i <= nIdxTo; i++)
 	{
 		double dVal = 0;
@@ -665,12 +668,23 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 		{
 			double fZoomV = (dVal - sItem.nTopHFrom) / nleftH;
 			double dNew = nleftNewH * fZoomV + sItem.nTopHFrom;
+			if (dNew < dMin)
+			{
+				dNew = dMin;
+			}
+			if (dLast != -9999 && dLast - dNew > 1)
+			{
+				dNew = dLast - 1;
+			}
 			SetDataByIdx(i, dNew);
+			dLast = dNew;
 		}
 	}
 
 	nIdxFrom = sItem.nTopDataIdx + 1;
 	nIdxTo = sItem.nEndDataIdx;
+	GetDataByIdx(sItem.nEndDataIdx, dMin);
+	dLast = -9999;
 	for (int i = nIdxFrom ; i <= nIdxTo; i++)
 	{
 		double dVal = 0;
@@ -678,7 +692,16 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 		{
 			double fZoomV = (dVal - sItem.nTopHTo) / nrightH;
 			double dNew = nrightNewH * fZoomV + sItem.nTopHTo;
+			if (dNew < dMin)
+			{
+				dNew = dMin;
+			}
+			if (dLast != -9999 && dNew - dLast> 1)
+			{
+				dNew = dLast + 1;
+			}
 			SetDataByIdx(i, dNew);
+			dLast = dNew;
 		}
 	}
 
