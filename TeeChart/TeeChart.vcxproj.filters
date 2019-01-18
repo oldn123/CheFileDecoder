@@ -16,6 +16,9 @@
     <Filter Include="listCtrl">
       <UniqueIdentifier>{46ae1e62-6d14-4276-9190-d75a4b079b7b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dog">
+      <UniqueIdentifier>{6b7144fb-5624-46bb-95fd-142a41fe673b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TeeChart.h">
@@ -113,6 +116,15 @@
     </ClInclude>
     <ClInclude Include="CListCtrl_DataModel3.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dog\dog_api.h">
+      <Filter>dog</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dog\dog_api_cpp.h">
+      <Filter>dog</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dog\vendor_code.h">
+      <Filter>dog</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

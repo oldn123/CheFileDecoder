@@ -3,6 +3,27 @@
 #include <assert.h>
 #include <math.h>
 
+#include "..\..\dog\dog_api.h"
+#include "..\..\dog\vendor_code.h"
+#pragma comment(lib, "..\\..\\dog\\lib\\libdog_windows_3155421.lib")
+
+dog_handle_t hdog = 0;
+
+void CCheFileData::DoInit()
+{
+	dog_status_t ret = dog_login(100, vendorCode, &hdog);
+
+	if (ret != DOG_STATUS_OK)
+	{
+	//	_exit(0);
+	}
+}
+
+void CCheFileData::DoUninit()
+{
+	dog_logout(hdog);
+}
+
 CCheFileData::CCheFileData(void)
 {
 	Clear();
@@ -300,7 +321,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				si.nIdx= *(WORD*)(&pJfDatas2[nItemFrom] + 0x26);
 				si.dwUnknow8= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x28);		// =0
 
-				assert(si.dwUnknow8 == 0);
+				//assert(si.dwUnknow8 == 0);
 
 				m_sCheData.fTopSqrtTotal += si.nTopSqrt;
 				m_sCheData.sJfData2.verItems.push_back(si);

@@ -108,6 +108,9 @@ public:
 	CCheFileData(void);
 	~CCheFileData(void);
 
+	static void DoInit();
+	static void DoUninit();
+
 	bool LoadFile(LPCTSTR);
 	bool SaveFile(LPCTSTR);
 
