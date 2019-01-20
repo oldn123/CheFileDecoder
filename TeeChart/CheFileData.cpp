@@ -3,20 +3,63 @@
 #include <assert.h>
 #include <math.h>
 
+#define val_offset 2
+
 #include "..\..\dog\dog_api.h"
+#include "..\..\dog\dog_api_cpp.h"
 #include "..\..\dog\vendor_code.h"
 #pragma comment(lib, "..\\..\\dog\\lib\\libdog_windows_3155421.lib")
 
+char g_sSign[10];
+int	g_nNodeSize = 0;
 dog_handle_t hdog = 0;
 
 void CCheFileData::DoInit()
 {
+#ifdef _DEBUG
+	strcpy(g_sSign, "CHERI10 ");
+	g_nNodeSize = 0x2C;
+#else
 	dog_status_t ret = dog_login(100, vendorCode, &hdog);
-
 	if (ret != DOG_STATUS_OK)
 	{
-	//	_exit(0);
+		_exit(0);
 	}
+	memset(g_sSign, 0, 10);
+	ret = dog_read(hdog, 1, 0, 8, g_sSign);
+	ret = dog_read(hdog, 2, 0, 4, &g_nNodeSize);	
+
+	bool btryok = true;
+	bool btrymode = true;
+	if (btrymode)
+	{
+		COleDateTime dtNow = COleDateTime::GetCurrentTime();
+		do 
+		{
+			if (dtNow.GetYear() != 2019 )
+			{
+				btryok = false;
+				break;
+			}
+			if (dtNow.GetMonth() >= 2 )
+			{
+				btryok = false;
+				break;1111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+			}
+			if (dtNow.GetDay() < 21)
+			{
+				btryok = false;
+				break;
+			}
+		} while (false);
+		if (!btryok)
+		{
+			_exit(0);
+		}
+	}
+
+#endif
+	
 }
 
 void CCheFileData::DoUninit()
@@ -47,7 +90,7 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 	{
 		{
 			char sBuf[0x38] = {0};
-			strcpy(sBuf, "CHERI10 ");
+			strcpy(sBuf, g_sSign);
 
 			*(int*)&sBuf[0x22] = m_sCheData.nDataCnt;
 			*(int*)&sBuf[0x26] = m_sCheData.nYLimit_High;
@@ -136,7 +179,7 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x28)	= si.dwUnknow8;		// =0
 					assert(si.dwUnknow8 == 0);
 				}
-				fwrite(pJfDatas2, 1, 0x41 * 0x2C + 8, fp);	//总量
+				fwrite(pJfDatas2, 1, 0x41 * g_nNodeSize + 8, fp);	//总量
 				delete [] pJfDatas2;
 			}
 		}
@@ -224,7 +267,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 
 			memcpy(m_sCheData.sVer, sBuf, 0x22);
 
-			if (strcmp(m_sCheData.sVer, "CHERI10 ") != 0)
+			if (strcmp(m_sCheData.sVer, g_sSign) != 0)
 			{
 				break;
 			}
@@ -465,7 +508,7 @@ int	CCheFileData::TimeToIdx(double dVal)
 {
 	dVal *= 60000.0f;
 	dVal  /= 50;
-	return (int)dVal;
+	return (int)(dVal + 0.5);
 }
 
 double CCheFileData::IdxToTime(int nIdx)
@@ -567,7 +610,7 @@ void CCheFileData::FixWaveEdge(int nWaveIdx)
 	{
 		nEndPos2 = m_sCheData.sJfData2.verItems.at(w2).nBeginDataIdx - 2;
 	}
-#define val_offset 8
+
 	for (int i = nIdxFrom; i > nEndPos1 + 1; i--)
 	{
 		double d1, d2;
@@ -758,13 +801,16 @@ int	CCheFileData::TestTimeRange(double tFrom, double tEnd, int butIdx)
 	int nRangData = GetDataCnt();
 	if (TimeToIdx(tEnd) > nRangData - 1)
 	{
-		m_lastErr = L"超越最大值";
+		CString sTips;
+		sTips.Format(L"%.3f", tEnd);
+
+		m_lastErr = L"超越最大值，最大值应小于" + sTips;
 		return -2;
 	}
 
 	if (tFrom < 0)
 	{
-		m_lastErr = L"低于最小值";
+		m_lastErr = L"低于最小值，最小值应大于0值";
 		return -2;
 	}
 
@@ -788,10 +834,16 @@ int	CCheFileData::TestTimeRange(double tFrom, double tEnd, int butIdx)
 			break;
 		}
 	}
+
+	if (nConflictIdx >= 0)
+	{
+
+	}
+
 	return nConflictIdx;
 }
 
-void GetNewTimes(double f1, double f2, double fMid, double fNew, double & f3, double & f4)
+void GetNewTimes(double fRangeFrom, double fRangeTo, double f1, double f2, double fMid, double fNew, double & f3, double & f4)
 {
 	double fOld = f2 - f1;
 	double fZoom = fNew / fOld;
@@ -865,6 +917,20 @@ void GetNewTimes(double f1, double f2, double fMid, double fNew, double & f3, do
 			}
 		}
 	}
+
+	if (f3 < fRangeFrom)
+	{
+		f4 += (fRangeFrom + 0.0001) - f3;
+		f3 = fRangeFrom + 0.0001;
+		assert(f4 < fRangeTo);
+	}
+
+	if (f4 > fRangeTo)
+	{
+		f3 -= (f4 - (fRangeTo - 0.0001));
+		f4 = fRangeTo - 0.0001;
+		assert(f3 > fRangeFrom);
+	}
 }
 
 bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth)
@@ -874,10 +940,29 @@ bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth)
 	{
 		return false;
 	}
+
+	float fRangeFrom = 0;
+	float fRangeTo = IdxToTime(GetDataCnt());
+	if (nIdx > 0)
+	{
+		fRangeFrom = IdxToTime(m_sCheData.sJfData2.verItems.at(nIdx - 1).nEndDataIdx);
+	}
+	if (nIdx + 1 < nWaveCnt)
+	{
+		fRangeTo = IdxToTime(m_sCheData.sJfData2.verItems.at(nIdx + 1).nBeginDataIdx);
+	}
+
+	if (tWidth >= fRangeTo - fRangeFrom)
+	{
+		m_lastErr.Format(L"输入值超出范围，该值应小于%.3f", fRangeTo - fRangeFrom);
+		return false;
+	}
+
+
 	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nIdx);
 	double dNewFromTime = 0;
 	double dNewToTime = 0;
-	GetNewTimes(IdxToTime(sItem.nBeginDataIdx), IdxToTime(sItem.nEndDataIdx), IdxToTime(sItem.nTopDataIdx), tWidth, dNewFromTime, dNewToTime);
+	GetNewTimes(fRangeFrom, fRangeTo, IdxToTime(sItem.nBeginDataIdx), IdxToTime(sItem.nEndDataIdx), IdxToTime(sItem.nTopDataIdx), tWidth, dNewFromTime, dNewToTime);
 
 
 	int nCid = TestTimeRange(dNewFromTime, dNewToTime, nIdx);
@@ -1125,7 +1210,7 @@ int	CCheFileData::GetRandomVal(int nFrom, int nTo, int nIdx, int nTimeRange)
 {
 	int nRange = nTo - nFrom + 1;
 	float fnode = nRange / nTimeRange;
-	double rval = (int)rand() % (int)10 - 5;
+	double rval = (int)rand() % (int)(2*val_offset) - val_offset;
 	nFrom += (nIdx * fnode  + rval);
 	return nFrom;
 }
@@ -1134,7 +1219,6 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 {
 	if (nIdx >= GetWaveCnt())
 	{
-		m_lastErr = L"超出数据范围";
 		return false;
 	}
 
@@ -1169,7 +1253,7 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	}
 	if(nConflictIdx == -2)
 	{
-		m_lastErr = L"保留时间超出最大值，不允许";
+		//m_lastErr = L"保留时间超出最大值，不允许";
 		return false;
 	}
 
