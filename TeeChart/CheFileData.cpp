@@ -4,7 +4,7 @@
 #include <math.h>
 
 #define val_offset 2
-//#define Use_dog
+#define Use_dog
 #ifdef Use_dog
 #include "..\..\dog\dog_api.h"
 #include "..\..\dog\dog_api_cpp.h"
