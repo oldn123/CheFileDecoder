@@ -4,22 +4,29 @@
 #include <math.h>
 
 #define val_offset 2
-
+//#define Use_dog
+#ifdef Use_dog
 #include "..\..\dog\dog_api.h"
 #include "..\..\dog\dog_api_cpp.h"
 #include "..\..\dog\vendor_code.h"
 #pragma comment(lib, "..\\..\\dog\\lib\\libdog_windows_3155421.lib")
 
+dog_handle_t hdog = 0;
+#endif
+
 char g_sSign[10];
 int	g_nNodeSize = 0;
-dog_handle_t hdog = 0;
+
+
 
 void CCheFileData::DoInit()
 {
+
 #ifdef _DEBUG
 	strcpy(g_sSign, "CHERI10 ");
 	g_nNodeSize = 0x2C;
 #else
+#ifdef Use_dog
 	dog_status_t ret = dog_login(100, vendorCode, &hdog);
 	if (ret != DOG_STATUS_OK)
 	{
@@ -28,6 +35,10 @@ void CCheFileData::DoInit()
 	memset(g_sSign, 0, 10);
 	ret = dog_read(hdog, 1, 0, 8, g_sSign);
 	ret = dog_read(hdog, 2, 0, 4, &g_nNodeSize);	
+#else
+	strcpy(g_sSign, "CHERI10 ");
+	g_nNodeSize = 0x2C;
+#endif
 
 	bool btryok = true;
 	bool btrymode = true;
@@ -44,7 +55,7 @@ void CCheFileData::DoInit()
 			if (dtNow.GetMonth() >= 2 )
 			{
 				btryok = false;
-				break;1111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+				break;
 			}
 			if (dtNow.GetDay() < 21)
 			{
@@ -57,14 +68,15 @@ void CCheFileData::DoInit()
 			_exit(0);
 		}
 	}
-
 #endif
-	
+
 }
 
 void CCheFileData::DoUninit()
 {
+#ifdef Use_Dog
 	dog_logout(hdog);
+#endif
 }
 
 CCheFileData::CCheFileData(void)
@@ -802,7 +814,7 @@ int	CCheFileData::TestTimeRange(double tFrom, double tEnd, int butIdx)
 	if (TimeToIdx(tEnd) > nRangData - 1)
 	{
 		CString sTips;
-		sTips.Format(L"%.3f", tEnd);
+		sTips.Format(L"%.3f", IdxToTime(nRangData - 1));
 
 		m_lastErr = L"超越最大值，最大值应小于" + sTips;
 		return -2;
