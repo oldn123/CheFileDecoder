@@ -1248,9 +1248,9 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	}
 
 	double fOffset = tLive - fOldLive;
+
 	sJfItem sItem;
 	GetWaveByIdx(nIdx, sItem);
-
 	int nIdxFromOld = TimeToIdx(sItem.fTimeFrom);
 	int nIdxToOld = TimeToIdx(sItem.fTimeTo);
 
@@ -1262,10 +1262,25 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	{
 		m_lastErr = L"波形重合，数据文件不支持此类型";
 		return false;
-	}
+	}	
+
+	sJfItem2 & item2 = m_sCheData.sJfData2.verItems[nIdx];
 	if(nConflictIdx == -2)
 	{
-		//m_lastErr = L"保留时间超出最大值，不允许";
+		double flTime = IdxToTime(item2.nTopDataIdx - item2.nBeginDataIdx + 1);
+		double frTime = IdxToTime(item2.nEndDataIdx - item2.nTopDataIdx - 1);
+		CString sTips;
+		if (tFrom < 0)
+		{
+			sTips.Format(L"%.3f", flTime);
+		}
+		else
+		{
+			int nRangData = GetDataCnt();
+			sTips.Format(L"%.3f", IdxToTime(nRangData - 1) - frTime);
+		}
+	
+		m_lastErr = L"超越最大值，最大值应小于" + sTips;
 		return false;
 	}
 
@@ -1294,7 +1309,6 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	m_sCheData.sJfData.verItems[nIdx].fTimeFrom = tFrom;
 	m_sCheData.sJfData.verItems[nIdx].fTimeTo = tEnd;
 
-	sJfItem2 & item2 = m_sCheData.sJfData2.verItems[nIdx];
 	item2.nBeginDataIdx = nIdxFrom;
 	item2.nTopDataIdx = TimeToIdx(tLive);
 	item2.nEndDataIdx = nIdxTo;
