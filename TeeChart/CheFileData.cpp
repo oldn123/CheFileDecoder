@@ -4,7 +4,13 @@
 #include <math.h>
 
 #define val_offset 2
+#ifndef _DEBUG
+
+//*****************
 #define Use_dog
+//*****************
+
+#endif
 #ifdef Use_dog
 #include "..\..\dog\dog_api.h"
 #include "..\..\dog\dog_api_cpp.h"
@@ -188,8 +194,11 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E)	= si.nTopSqrt;
 					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x22)	= si.nTopHVal;
 					*(WORD*)(&pJfDatas2[nItemFrom] + 0x26)	= si.nIdx;
-					*(DWORD*)(&pJfDatas2[nItemFrom] + 0x28)	= si.dwUnknow8;		// =0
-					assert(si.dwUnknow8 == 0);
+					*(WORD*)(&pJfDatas2[nItemFrom] + 0x28)	= si.wUnKnow2;		// =0
+					*(WORD*)(&pJfDatas2[nItemFrom] + 0x2A)	= si.wUnKnow3;		// =0
+	
+					assert(si.wUnKnow2 == 0);
+					assert(si.wUnKnow3 == 0);
 				}
 				fwrite(pJfDatas2, 1, 0x41 * g_nNodeSize + 8, fp);	//总量
 				delete [] pJfDatas2;
@@ -374,9 +383,10 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				si.nTopSqrt= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x1E);
 				si.nTopHVal= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x22);
 				si.nIdx= *(WORD*)(&pJfDatas2[nItemFrom] + 0x26);
-				si.dwUnknow8= *(DWORD*)(&pJfDatas2[nItemFrom] + 0x28);		// =0
-
-				//assert(si.dwUnknow8 == 0);
+				si.wUnKnow2 = *(WORD*)(&pJfDatas2[nItemFrom] + 0x28);		// =0
+				si.wUnKnow3 = *(WORD*)(&pJfDatas2[nItemFrom] + 0x2A);
+				assert(si.wUnKnow2 == 0);
+				assert(si.wUnKnow3 == 0);
 
 				m_sCheData.fTopSqrtTotal += si.nTopSqrt;
 				m_sCheData.sJfData2.verItems.push_back(si);
@@ -455,6 +465,26 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 	fclose(fp);
 
 
+	//修复item1
+	if (m_sCheData.sJfData.verItems.size() != m_sCheData.sJfData2.verItems.size())
+	{
+		//重建item1
+		m_sCheData.sJfData.verItems.clear();
+		for (auto iter = m_sCheData.sJfData2.verItems.begin(); iter != m_sCheData.sJfData2.verItems.end(); iter++)
+		{
+			sJfItem item;
+			item.fTimeFrom = IdxToTime(iter->nBeginDataIdx);
+			item.fTimeTo = IdxToTime(iter->nEndDataIdx);
+			item.fPowerFrom = iter->nTopHFrom;
+			item.fPowerTo = iter->nTopHTo;
+			item.wUnKnow = 0;
+			m_sCheData.sJfData.verItems.push_back(item);
+		}
+		m_sCheData.sJfData.nItemCnt = m_sCheData.sJfData.verItems.size();
+	}
+
+
+
 	m_strInputfile = sInput;
 
 	return true;
@@ -501,6 +531,8 @@ bool CCheFileData::GetDataByIdx(int nIdx, double & fRetData)
 	{
 		DWORD dwData = m_sCheData.verMainDatas.at(nIdx);
 		fRetData = DataToValue(dwData);
+
+		//TRACE(L"GetDataByIdx: %d, %d\n", nIdx, (int)fRetData);
 		return true;
 	}
 	return false;
@@ -508,6 +540,7 @@ bool CCheFileData::GetDataByIdx(int nIdx, double & fRetData)
 
 bool CCheFileData::SetDataByIdx(int nIdx, double fVal)
 {
+	//TRACE(L"SetDataByIdx: %d, %d\n", nIdx, (int)fVal);
 	if (nIdx < m_sCheData.verMainDatas.size())
 	{
 		m_sCheData.verMainDatas[nIdx] =  ValueToData((long)fVal);
@@ -540,13 +573,13 @@ int	 CCheFileData::GetWaveCnt()
 	return m_sCheData.sJfData2.verItems.size();
 }
 
-bool CCheFileData::GetWaveByIdx(int nIdx, sJfItem & sItem)
+bool CCheFileData::GetWaveByIdx(int nIdx, sJfItem2 & sItem)
 {
 	if (nIdx >= GetWaveCnt())
 	{
 		return false;
 	}
-	sItem = m_sCheData.sJfData.verItems.at(nIdx);
+	sItem = m_sCheData.sJfData2.verItems.at(nIdx);
 	return true;
 }
 
@@ -723,8 +756,17 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 		return false;
 	}
 	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nIdx);
-	int nleftH = sItem.nTopHVal - sItem.nTopHFrom;
-	int nrightH = sItem.nTopHVal - sItem.nTopHTo;
+	int nleftH = sItem.nTopHVal;// - sItem.nTopHFrom;
+	int nrightH = sItem.nTopHVal;// - sItem.nTopHTo;
+
+	if (nleftH < nrightH)
+	{
+		nrightH = nleftH;
+	}
+	else
+	{
+		nleftH = nrightH;
+	}
 
 	double fZoom = (double)nTop / sItem.nTopHVal;
 
@@ -737,6 +779,7 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 	GetDataByIdx(sItem.nBeginDataIdx, dMin);
 	vector<double> arrDataZoom;
 	double dLast = -9999;
+	double nMaxPos = 0;
 	for (int i = nIdxFrom ; i <= nIdxTo; i++)
 	{
 		double dVal = 0;
@@ -754,6 +797,10 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 			}
 			SetDataByIdx(i, dNew);
 			dLast = dNew;
+			if (dNew > nMaxPos)
+			{
+				nMaxPos = dNew;
+			}
 		}
 	}
 
@@ -778,11 +825,16 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 			}
 			SetDataByIdx(i, dNew);
 			dLast = dNew;
+			if (dNew > nMaxPos)
+			{
+				nMaxPos = dNew;
+			}
 		}
 	}
 
 	sItem.nTopHVal = nTop;
-	sItem.nTopHPos *= fZoom;
+	//sItem.nTopHPos *= fZoom;
+	sItem.nTopHPos = nMaxPos;
 
 	return true;
 }
@@ -811,7 +863,9 @@ int	CCheFileData::TestTimeRange(double tFrom, double tEnd, int butIdx)
 {
 	int nWaveCnt = GetWaveCnt();
 	int nRangData = GetDataCnt();
-	if (TimeToIdx(tEnd) > nRangData - 1)
+	int nIdxFrom = TimeToIdx(tFrom);
+	int nIdxTo = TimeToIdx(tEnd);
+	if (nIdxTo > nRangData - 1)
 	{
 		CString sTips;
 		sTips.Format(L"%.3f", IdxToTime(nRangData - 1));
@@ -833,14 +887,14 @@ int	CCheFileData::TestTimeRange(double tFrom, double tEnd, int butIdx)
 		{
 			continue;
 		}
-		sJfItem sItem;
+		sJfItem2 sItem;
 		GetWaveByIdx(i, sItem);
-		if (tFrom >= sItem.fTimeFrom && tFrom <= sItem.fTimeTo)
+		if (nIdxFrom >= sItem.nBeginDataIdx && nIdxFrom <= sItem.nEndDataIdx)
 		{
 			nConflictIdx = i;
 			break;
 		}
-		if (tEnd >= sItem.fTimeFrom && tEnd <= sItem.fTimeTo)
+		if (nIdxTo >= sItem.nBeginDataIdx && nIdxTo <= sItem.nEndDataIdx)
 		{
 			nConflictIdx = i;
 			break;
@@ -930,17 +984,18 @@ void GetNewTimes(double fRangeFrom, double fRangeTo, double f1, double f2, doubl
 		}
 	}
 
+	double fOffset = CCheFileData::IdxToTime(1);
 	if (f3 < fRangeFrom)
 	{
-		f4 += (fRangeFrom + 0.0001) - f3;
-		f3 = fRangeFrom + 0.0001;
+		f4 += (fRangeFrom + fOffset) - f3;
+		f3 = fRangeFrom + fOffset;
 		assert(f4 < fRangeTo);
 	}
 
 	if (f4 > fRangeTo)
 	{
-		f3 -= (f4 - (fRangeTo - 0.0001));
-		f4 = fRangeTo - 0.0001;
+		f3 -= (f4 - (fRangeTo - fOffset));
+		f4 = fRangeTo - fOffset;
 		assert(f3 > fRangeFrom);
 	}
 }
@@ -954,7 +1009,7 @@ bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth)
 	}
 
 	float fRangeFrom = 0;
-	float fRangeTo = IdxToTime(GetDataCnt());
+	float fRangeTo = IdxToTime(GetDataCnt() - 2);
 	if (nIdx > 0)
 	{
 		fRangeFrom = IdxToTime(m_sCheData.sJfData2.verItems.at(nIdx - 1).nEndDataIdx);
@@ -964,9 +1019,9 @@ bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth)
 		fRangeTo = IdxToTime(m_sCheData.sJfData2.verItems.at(nIdx + 1).nBeginDataIdx);
 	}
 
-	if (tWidth >= fRangeTo - fRangeFrom)
+	if (tWidth > fRangeTo - fRangeFrom)
 	{
-		m_lastErr.Format(L"输入值超出范围，该值应小于%.3f", fRangeTo - fRangeFrom);
+		m_lastErr.Format(L"输入值超出范围，该值应小于%.3f", (int)((fRangeTo - fRangeFrom)*1000) / 1000.0);
 		return false;
 	}
 
@@ -1249,13 +1304,13 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 
 	double fOffset = tLive - fOldLive;
 
-	sJfItem sItem;
+	sJfItem2 sItem;
 	GetWaveByIdx(nIdx, sItem);
-	int nIdxFromOld = TimeToIdx(sItem.fTimeFrom);
-	int nIdxToOld = TimeToIdx(sItem.fTimeTo);
+	int nIdxFromOld = sItem.nBeginDataIdx;
+	int nIdxToOld = sItem.nEndDataIdx;
 
-	double tFrom = sItem.fTimeFrom + fOffset;
-	double tEnd = sItem.fTimeTo + fOffset;
+	double tFrom = IdxToTime(nIdxFromOld) + fOffset;
+	double tEnd = IdxToTime(nIdxToOld) + fOffset;
 
 	int nConflictIdx = TestTimeRange(tFrom, tEnd, nIdx);
 	if (nConflictIdx >= 0)

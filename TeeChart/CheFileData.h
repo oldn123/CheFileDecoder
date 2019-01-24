@@ -33,7 +33,8 @@ struct sJfItem2
 	int		nTopHFrom;			//峰起始高度
 	int		nTopHTo;			//峰终止高度
 	WORD	nIdx;
-	DWORD	dwUnknow8;		// =0
+	WORD	wUnKnow2;			// =0
+	WORD	wUnKnow3;			// =0
 };
 
 struct sItemData2
@@ -121,6 +122,9 @@ public:
 	static long	DataToValue(long);
 	static long	ValueToData(long);
 
+	static int	TimeToIdx(double);
+	static double IdxToTime(int);
+
 	int		GetDataCnt();
 	bool	GetDataByIdx(int, double & );
 	bool	SetDataByIdx(int, double);
@@ -130,7 +134,7 @@ public:
 	void	ChangeDataRange(int, int);
 
 	int		GetWaveCnt();
-	bool	GetWaveByIdx(int, sJfItem & );
+	bool	GetWaveByIdx(int, sJfItem2 & );
 	bool	GetWaveLiveTimeByIdx(int, double & );
 	bool	GetWaveTopByIdx(int, int & );
 
@@ -147,8 +151,7 @@ public:
 protected:
 	void	Clear();
 	void	ZoomWave(int nIdx, float fZoom);
-	int		TimeToIdx(double);
-	double	IdxToTime(int);
+
 	int		TestTimeRange(double dFrom, double dTo, int butIdx);
 	int		GetRandomVal(int, int, int nIdx, int nTimeRange);
 
