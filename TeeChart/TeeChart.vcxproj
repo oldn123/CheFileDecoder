@@ -188,6 +188,7 @@
     <ClInclude Include="..\..\dog\dog_api.h" />
     <ClInclude Include="..\..\dog\dog_api_cpp.h" />
     <ClInclude Include="..\..\dog\vendor_code.h" />
+    <ClInclude Include="AddWaveDlg.h" />
     <ClInclude Include="CAxes.h" />
     <ClInclude Include="CAxis.h" />
     <ClInclude Include="CGridListCtrlEx\CGridColumnTrait.h" />
@@ -213,6 +214,7 @@
     <ClInclude Include="CScroll.h" />
     <ClInclude Include="CSeries.h" />
     <ClInclude Include="CTChart.h" />
+    <ClInclude Include="EditTimesDlg.h" />
     <ClInclude Include="mscomm1.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -222,6 +224,7 @@
     <ClInclude Include="TeeChartDlg.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AddWaveDlg.cpp" />
     <ClCompile Include="CGridListCtrlEx\CGridColumnTraitCombo.cpp" />
     <ClCompile Include="CGridListCtrlEx\CGridColumnTraitDateTime.cpp" />
     <ClCompile Include="CGridListCtrlEx\CGridColumnTraitEdit.cpp" />
@@ -235,6 +238,7 @@
     <ClCompile Include="CGridListCtrlEx\CGridRowTraitXP.cpp" />
     <ClCompile Include="CGridListCtrlEx\ViewConfigSection.cpp" />
     <ClCompile Include="CheFileData.cpp" />
+    <ClCompile Include="EditTimesDlg.cpp" />
     <ClCompile Include="mscomm1.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -1277,7 +1277,7 @@ int	CCheFileData::GetRandomVal(int nFrom, int nTo, int nIdx, int nTimeRange)
 {
 	int nRange = nTo - nFrom + 1;
 	float fnode = nRange / nTimeRange;
-	double rval = (int)rand() % (int)(2*val_offset) - val_offset;
+	double rval = 0;//(int)rand() % (int)(2*val_offset) - val_offset;
 	nFrom += (nIdx * fnode  + rval);
 	return nFrom;
 }
@@ -1373,6 +1373,90 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	return true;
 }
 
+void CCheFileData::RemoveWave(int nIdx)
+{
+	NormalizeWave(nIdx);
+	m_sCheData.sJfData2.verItems.erase(m_sCheData.sJfData2.verItems.begin() + nIdx);
+	m_sCheData.sJfData2.nItemCnt = m_sCheData.sJfData2.verItems.size();
+
+	m_sCheData.sJfData.verItems.erase(m_sCheData.sJfData.verItems.begin() + nIdx);
+	m_sCheData.sJfData.nItemCnt = m_sCheData.sJfData.verItems.size();
+}
+
+int	CCheFileData::AddWave(double tLiveTime, double tWidth, int nTopValue)
+{
+	return 0;
+}
+
+void CCheFileData::AppendTimes(int nTimes)
+{
+	int nDataCnt = nTimes / IdxToTime(1);
+	AppendDatas(nDataCnt);
+}
+
+void CCheFileData::AppendDatas(int nTimes)
+{
+	double dVal;
+	if(!GetDataByIdx(m_sCheData.nDataCnt - 1, dVal))
+	{
+		return;
+	}
+
+	int nPosFrom = 0;
+	int nWvCnt = GetWaveCnt();
+	if (nWvCnt > 0)
+	{
+		sJfItem2 item;
+		GetWaveByIdx(nWvCnt - 1, item);
+		nPosFrom = item.nEndDataIdx + 1;
+	}
+	
+	int nMinDiff = 0x10000;
+	int nMinPos = 0;
+	for(int i = nPosFrom; i < m_sCheData.nDataCnt - 1; i++)
+	{
+		double dVal2;
+		if(!GetDataByIdx(i, dVal2))
+		{
+			break;
+		}
+
+		int nDiff = abs(dVal - dVal2);
+		if (nDiff < nMinDiff)
+		{
+			nMinDiff = nDiff;
+			nMinPos = i;
+		}
+
+		if (nDiff < 2)
+		{
+			nMinPos = i;
+			break;
+		}
+	}
+
+	m_sCheData.verMainDatas.reserve(m_sCheData.verMainDatas.size() + nTimes + 1);
+	int nCnt = 0;
+	for(int i = nMinPos; i < m_sCheData.nDataCnt; i++)
+	{
+		double dv;
+		GetDataByIdx(i, dv);
+		m_sCheData.verMainDatas.push_back(ValueToData(dv));
+		nCnt++;
+		if (nCnt == nTimes)
+		{
+			break;
+		}
+		if (i == m_sCheData.nDataCnt - 1)
+		{
+			i = nMinPos;
+		}
+	}
+
+	m_sCheData.nDataCnt = m_sCheData.verMainDatas.size();
+	*m_sCheData.nDataCnt2 = m_sCheData.nDataCnt;
+}
+
 void CCheFileData::Clear()
 {
 	srand(time(NULL));
@@ -1385,6 +1469,7 @@ void CCheFileData::Clear()
 	m_sCheData.verMainDatas.clear();
 	memset(&m_sCheData.unKownBytes_0a[0], 0, 0x0a);
 	memset(&m_sCheData.unKownBytes_2e[0], 0, 0x2E);
+	m_sCheData.nDataCnt2 = (int*)&m_sCheData.unKownBytes_2e[6];
 	m_sCheData.dtOle1 = 0;
 	m_sCheData.dtOle2 = 0;
 	m_sCheData.nUnKnowVal2 = 0;

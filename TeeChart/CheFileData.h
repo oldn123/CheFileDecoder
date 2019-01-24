@@ -82,6 +82,7 @@ struct sCheData
 {
 	char sVer[0x22];
 	int nDataCnt;
+	int *nDataCnt2;
 	int nYLimit_High;
 	int nYLimit_Low;
 	BYTE unKownBytes_0a[0x0a];
@@ -148,6 +149,10 @@ public:
 	bool	ResetStdWave(int nWaveIdx, int nFromIdx, int nToIdx, long lTop);
 	CString GetLastErr(){return m_lastErr;}
 
+	void	RemoveWave(int nIdx);
+	int		AddWave(double tLiveTime, double tWidth, int nTopValue);
+	void	AppendDatas(int nDataCnt);
+	void	AppendTimes(int nSecs);
 protected:
 	void	Clear();
 	void	ZoomWave(int nIdx, float fZoom);

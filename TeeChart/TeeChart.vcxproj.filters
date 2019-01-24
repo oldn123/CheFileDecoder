@@ -126,6 +126,12 @@
     <ClInclude Include="..\..\dog\vendor_code.h">
       <Filter>dog</Filter>
     </ClInclude>
+    <ClInclude Include="EditTimesDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AddWaveDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TeeChart.cpp">
@@ -180,6 +186,12 @@
       <Filter>listCtrl</Filter>
     </ClCompile>
     <ClCompile Include="CheFileData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EditTimesDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AddWaveDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
