@@ -617,9 +617,8 @@ bool CCheFileData::GetWaveLiveTimeByIdx(int nIdx, double & fTimeLive)
 		return false;
 	}
 
-	sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
-	assert(nIdx == item.nIdx);
-	fTimeLive = item.fLiveTime;
+	sJfItem2 & item = m_sCheData.sJfData2.verItems[nIdx];
+	fTimeLive = IdxToTime(item.nTopDataIdx);
 	return true;
 }
 
@@ -1282,7 +1281,7 @@ int	CCheFileData::GetRandomVal(int nFrom, int nTo, int nIdx, int nTimeRange)
 	return nFrom;
 }
 
-bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
+bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive, bool bcopyMode)
 {
 	if (nIdx >= GetWaveCnt())
 	{
@@ -1309,10 +1308,19 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 	int nIdxFromOld = sItem.nBeginDataIdx;
 	int nIdxToOld = sItem.nEndDataIdx;
 
+	int nRangeData = GetDataCnt();
+	int nNewLiveIdx = TimeToIdx(tLive);
+	int nNewDataCnt = nIdxToOld - nIdxFromOld + 1;
+	if (nNewLiveIdx + nNewDataCnt > nRangeData)
+	{
+		int nAddRangeData = nNewLiveIdx + nNewDataCnt - nRangeData;
+		AppendDatas(nAddRangeData);
+	}
+
 	double tFrom = IdxToTime(nIdxFromOld) + fOffset;
 	double tEnd = IdxToTime(nIdxToOld) + fOffset;
-
-	int nConflictIdx = TestTimeRange(tFrom, tEnd, nIdx);
+	int nIdxBut = bcopyMode ? -1 : nIdx;
+	int nConflictIdx = TestTimeRange(tFrom, tEnd, nIdxBut);
 	if (nConflictIdx >= 0)
 	{
 		m_lastErr = L"波形重合，数据文件不支持此类型";
@@ -1349,7 +1357,20 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 		pDataBak[i - nIdxFromOld] = dv;
 	}
 
-	NormalizeWave(nIdx);
+	if (!bcopyMode)
+	{
+		NormalizeWave(nIdx);
+
+		sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
+		item.fLiveTime = (float)tLive;
+
+		m_sCheData.sJfData.verItems[nIdx].fTimeFrom = tFrom;
+		m_sCheData.sJfData.verItems[nIdx].fTimeTo = tEnd;
+
+		item2.nBeginDataIdx = nIdxFrom;
+		item2.nTopDataIdx = TimeToIdx(tLive);
+		item2.nEndDataIdx = nIdxTo;
+	}
 
 	for (int i = nIdxFrom; i <= nIdxTo; i++)
 	{
@@ -1358,15 +1379,29 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive )
 
 	delete [] pDataBak;
 
-	sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
-	item.fLiveTime = (float)tLive;
+	if (bcopyMode)
+	{
+		sJfItem item1New;
+		memcpy(&item1New, &m_sCheData.sJfData.verItems[nIdx], sizeof(item1New));
+		item1New.fTimeFrom = tFrom;
+		item1New.fTimeTo = tEnd;
 
-	m_sCheData.sJfData.verItems[nIdx].fTimeFrom = tFrom;
-	m_sCheData.sJfData.verItems[nIdx].fTimeTo = tEnd;
+		m_sCheData.sJfData.nItemCnt++;
+		m_sCheData.sJfData.wItemCnt++;
+		m_sCheData.sJfData.verItems.push_back(item1New);
 
-	item2.nBeginDataIdx = nIdxFrom;
-	item2.nTopDataIdx = TimeToIdx(tLive);
-	item2.nEndDataIdx = nIdxTo;
+		sJfItem2 item2New;
+		memcpy(&item2New, &item2, sizeof(item2));
+		item2New.nBeginDataIdx = nIdxFrom;
+		item2New.nTopDataIdx = TimeToIdx(tLive);
+		item2New.nEndDataIdx = nIdxTo;
+
+		m_sCheData.sJfData2.nItemCnt++;
+		m_sCheData.sJfData2.wItemCnt++;
+		m_sCheData.sJfData2.verItems.push_back(item2New);
+
+		nIdx = m_sCheData.sJfData2.verItems.size() - 1;
+	}
 
 	FixWaveEdge(nIdx);
 
@@ -1383,12 +1418,27 @@ void CCheFileData::RemoveWave(int nIdx)
 	m_sCheData.sJfData.nItemCnt = m_sCheData.sJfData.verItems.size();
 }
 
-int	CCheFileData::AddWave(double tLiveTime, double tWidth, int nTopValue)
+int	CCheFileData::AddWave(double tLiveTime, double tWidth, int nTopValue, double dSqrt, int nBaseOnIdx)
 {
+	sJfItem2 item;
+	if(!GetWaveByIdx(nBaseOnIdx, item))
+	{
+		return -1;
+	}
+
+	if (!ChangeWaveTimePos(nBaseOnIdx, tLiveTime, true))
+	{
+		assert(0);
+		return -1;
+	}
+
+
+
+
 	return 0;
 }
 
-void CCheFileData::AppendTimes(int nTimes)
+void CCheFileData::AppendTimes(float nTimes)
 {
 	int nDataCnt = nTimes / IdxToTime(1);
 	AppendDatas(nDataCnt);

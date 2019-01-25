@@ -3,12 +3,19 @@
 
 // CEditTimesDlg dialog
 
+class IChangeTimesNotify
+{
+public:
+	virtual bool OnChangeTimesNotify(float) = 0;
+};
+
+
 class CEditTimesDlg : public CDialogEx
 {
 	DECLARE_DYNAMIC(CEditTimesDlg)
 
 public:
-	CEditTimesDlg(CWnd* pParent = NULL);   // standard constructor
+	CEditTimesDlg(IChangeTimesNotify *, CWnd* pParent = NULL);   // standard constructor
 	virtual ~CEditTimesDlg();
 
 // Dialog Data
@@ -18,4 +25,9 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedOk();
+
+protected:
+	IChangeTimesNotify * m_pNotify;
 };

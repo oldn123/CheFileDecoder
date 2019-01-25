@@ -143,16 +143,16 @@ public:
 	bool	ChangeWaveTop(int, int );
 	bool	ChangeWaveTimeWidth(int, double tWidth);
 	bool	ChangeWaveTimeRange(int, double tFrom, double tEnd);
-	bool	ChangeWaveTimePos(int, double tLive );
+	bool	ChangeWaveTimePos(int, double tLive, bool bcopyMode = false);
 	void	NormalizeWave(int);
 	void	FixWaveEdge(int);
 	bool	ResetStdWave(int nWaveIdx, int nFromIdx, int nToIdx, long lTop);
 	CString GetLastErr(){return m_lastErr;}
 
 	void	RemoveWave(int nIdx);
-	int		AddWave(double tLiveTime, double tWidth, int nTopValue);
+	int		AddWave(double tLiveTime, double tWidth, int nTopValue , double dSqrt, int nBaseOnIdx);
 	void	AppendDatas(int nDataCnt);
-	void	AppendTimes(int nSecs);
+	void	AppendTimes(float nSecs);
 protected:
 	void	Clear();
 	void	ZoomWave(int nIdx, float fZoom);
