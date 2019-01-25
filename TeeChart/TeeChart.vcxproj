@@ -189,6 +189,7 @@
     <ClInclude Include="..\..\dog\dog_api_cpp.h" />
     <ClInclude Include="..\..\dog\vendor_code.h" />
     <ClInclude Include="AddWaveDlg.h" />
+    <ClInclude Include="BaseDlg.h" />
     <ClInclude Include="CAxes.h" />
     <ClInclude Include="CAxis.h" />
     <ClInclude Include="CGridListCtrlEx\CGridColumnTrait.h" />
@@ -225,6 +226,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AddWaveDlg.cpp" />
+    <ClCompile Include="BaseDlg.cpp" />
     <ClCompile Include="CGridListCtrlEx\CGridColumnTraitCombo.cpp" />
     <ClCompile Include="CGridListCtrlEx\CGridColumnTraitDateTime.cpp" />
     <ClCompile Include="CGridListCtrlEx\CGridColumnTraitEdit.cpp" />

@@ -9,10 +9,10 @@
 
 // CEditTimesDlg dialog
 
-IMPLEMENT_DYNAMIC(CEditTimesDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CEditTimesDlg, CBaseDlg)
 
 CEditTimesDlg::CEditTimesDlg(IChangeTimesNotify* pn, CWnd* pParent /*=NULL*/)
-	: CDialogEx(CEditTimesDlg::IDD, pParent)
+	: CBaseDlg(CEditTimesDlg::IDD, pParent)
 {
 	m_pNotify = pn;
 }
@@ -23,11 +23,11 @@ CEditTimesDlg::~CEditTimesDlg()
 
 void CEditTimesDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CBaseDlg::DoDataExchange(pDX);
 }
 
 
-BEGIN_MESSAGE_MAP(CEditTimesDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CEditTimesDlg, CBaseDlg)
 	ON_BN_CLICKED(IDOK, &CEditTimesDlg::OnBnClickedOk)
 END_MESSAGE_MAP()
 
@@ -46,4 +46,18 @@ void CEditTimesDlg::OnBnClickedOk()
 	{	
 		CDialogEx::OnOK();
 	}
+}
+
+
+BOOL CEditTimesDlg::OnInitDialog()
+{
+	CBaseDlg::OnInitDialog();
+
+	// TODO:  Add extra initialization here
+	SetFloatEditId(IDC_EDIT1);
+
+	SetDlgItemInt(IDC_EDIT1, 1);
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	// EXCEPTION: OCX Property Pages should return FALSE
 }

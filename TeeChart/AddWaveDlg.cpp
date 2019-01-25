@@ -9,10 +9,10 @@
 
 // CAddWaveDlg dialog
 
-IMPLEMENT_DYNAMIC(CAddWaveDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CAddWaveDlg, CBaseDlg)
 
 CAddWaveDlg::CAddWaveDlg(INewWaveNotify * p, vector<CString>* pw, CWnd* pParent /*=NULL*/)
-	: CDialogEx(CAddWaveDlg::IDD, pParent)
+	: CBaseDlg(CAddWaveDlg::IDD, pParent)
 {
 	m_pNotify = p;
 	m_pWaveNameArr = pw;
@@ -24,12 +24,12 @@ CAddWaveDlg::~CAddWaveDlg()
 
 void CAddWaveDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CBaseDlg::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO1, m_cb);
 }
 
 
-BEGIN_MESSAGE_MAP(CAddWaveDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CAddWaveDlg, CBaseDlg)
 	ON_BN_CLICKED(IDOK, &CAddWaveDlg::OnBnClickedOk)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &CAddWaveDlg::OnCbnSelchangeCombo1)
 END_MESSAGE_MAP()
@@ -72,9 +72,11 @@ void CAddWaveDlg::OnBnClickedOk()
 
 BOOL CAddWaveDlg::OnInitDialog()
 {
-	CDialogEx::OnInitDialog();
+	CBaseDlg::OnInitDialog();
 
 	// TODO:  Add extra initialization here
+	SetFloatEditId(IDC_EDIT_TIME);
+	SetFloatEditId(IDC_EDIT_WIDTH);
 
 	if (m_pWaveNameArr)
 	{

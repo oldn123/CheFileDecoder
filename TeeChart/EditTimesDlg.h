@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BaseDlg.h"
 
 // CEditTimesDlg dialog
 
@@ -10,7 +11,7 @@ public:
 };
 
 
-class CEditTimesDlg : public CDialogEx
+class CEditTimesDlg : public CBaseDlg
 {
 	DECLARE_DYNAMIC(CEditTimesDlg)
 
@@ -30,4 +31,6 @@ public:
 
 protected:
 	IChangeTimesNotify * m_pNotify;
+public:
+	virtual BOOL OnInitDialog();
 };

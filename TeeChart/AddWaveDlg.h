@@ -1,7 +1,7 @@
 #pragma once
 #include "afxwin.h"
 #include <vector>
-
+#include "BaseDlg.h"
 using namespace std;
 // CAddWaveDlg dialog
 
@@ -13,7 +13,7 @@ public:
 };
 
 
-class CAddWaveDlg : public CDialogEx
+class CAddWaveDlg : public CBaseDlg
 {
 	DECLARE_DYNAMIC(CAddWaveDlg)
 
