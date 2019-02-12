@@ -2,6 +2,7 @@
 #include "CheFileData.h"
 #include <assert.h>
 #include <math.h>
+#include <map>
 
 #define val_offset 2
 #ifndef _DEBUG
@@ -23,6 +24,57 @@ dog_handle_t hdog = 0;
 char g_sSign[10];
 int	g_nNodeSize = 0;
 
+
+void _ZoomTimeData(vector<int> & arrInData, int nNewCnt, vector<int> & arrOutData);
+
+
+void MakeLineVal(int nfrom, int nto, int ncnt, bool bHasLeft, bool bHasRigth, vector<int> & arr)
+{
+	arr.clear();
+	if (ncnt < 1)
+	{
+		return;
+	}
+	if (ncnt > 1)
+	{
+		int nFromVal = 1;
+		int nrc = ncnt;
+		int nToVal = nrc;
+		if (bHasLeft && bHasRigth)
+		{
+			nrc = ncnt - 1;
+			nFromVal = 0;
+			nToVal = nrc + 1;
+		}
+		else
+		{
+			if (bHasLeft)
+			{
+				nFromVal = 0;
+			}
+			else
+				if (bHasRigth)
+				{
+					nToVal = nrc + 1;
+				}
+				else
+				{
+					nToVal = nrc + 1;
+					nrc = ncnt + 1;
+				}
+		}
+		double delta=(nto-nfrom)*1.0/nrc;   
+		arr.reserve(ncnt);
+		for (int N=nFromVal; N<nToVal; N++)   
+		{   
+			arr.push_back((int)((nfrom + delta*N)+0.5));
+		}  
+	}
+	else
+	{
+		arr.push_back(nfrom + (nto - nfrom) / 2);
+	}
+}
 
 
 void CCheFileData::DoInit()
@@ -642,54 +694,260 @@ void CCheFileData::FixWaveEdge(int nWaveIdx)
 
 	int nEndPos1 = 0;
 	int nEndPos2 = m_sCheData.nDataCnt;
-
-	int w1 = nWaveIdx - 1;
-	int w2 = nWaveIdx + 1;
-	if (w1 > 0)
+	int ndf1 = 0x7fffffff;
+	int ndf2 = 0x7fffffff;
+	for (int i = 0; i < GetWaveCnt(); i++)
 	{
-		nEndPos1 = m_sCheData.sJfData2.verItems.at(w1).nEndDataIdx + 2;
+		if (i == nWaveIdx)
+		{
+			continue;
+		}
+		sJfItem2 tmp2;
+		GetWaveByIdx(i, tmp2);
+		int nl = nIdxFrom - tmp2.nEndDataIdx;
+		if (nl > 0)
+		{
+			if (nl < ndf1)
+			{
+				ndf1 = nl;
+				nEndPos1 = tmp2.nEndDataIdx + 1;
+			}
+		}
+		int nl2 = tmp2.nBeginDataIdx - nIdxTo;
+		if (nl2 > 0)
+		{
+			if (nl2 < ndf2)
+			{
+				ndf2 = nl2;
+				nEndPos2 = tmp2.nBeginDataIdx - 1;
+			}
+		}
 	}
 
-	if (w2 < m_sCheData.sJfData2.verItems.size())
-	{
-		nEndPos2 = m_sCheData.sJfData2.verItems.at(w2).nBeginDataIdx - 2;
-	}
 
+	int nIdx = 0;
+	double d1, d2;
+	GetDataByIdx(nIdxFrom, d1);
+	GetDataByIdx(nEndPos1 + 1, d2);
+
+	vector<int> arrInput, arrOutput;
+	arrInput.push_back(d1);
+	arrInput.push_back(d2);
+
+	_ZoomTimeData(arrInput, abs(nEndPos1 + 1 - nIdxFrom), arrOutput);
 	for (int i = nIdxFrom; i > nEndPos1 + 1; i--)
 	{
-		double d1, d2;
+		SetDataByIdx(i - 1, arrOutput[nIdx++]);
+	}
+
+
+	arrInput.clear();
+	arrOutput.clear();
+	GetDataByIdx(nIdxTo, d1);
+	GetDataByIdx(nEndPos2 - 1, d2);
+	arrInput.push_back(d1);
+	arrInput.push_back(d2);
+	_ZoomTimeData(arrInput, abs(nEndPos2 - 1 - nIdxTo), arrOutput);
+	nIdx = 0;
+	for (int i = nIdxTo; i < nEndPos2 - 1; i++)
+	{
+		SetDataByIdx(i+1, arrOutput[nIdx++]);
+	}
+}
+
+// 
+// void CCheFileData::SmoothWave(int nWaveIdx)
+// {
+// 	sJfItem2 itemWave;
+// 	if(!GetWaveByIdx(nWaveIdx, itemWave))
+// 	{
+// 		return ;
+// 	}
+// 
+// 	int nFromIdx = itemWave.nBeginDataIdx;
+// 	int nTopIdx = itemWave.nTopDataIdx;
+// 	int nToIdx = itemWave.nEndDataIdx;
+// 
+// 	vector<double> diffArr;
+// 	vector<double> srcArr;
+// 	double nLastVal;
+// 	GetDataByIdx(nFromIdx, nLastVal);
+// 	int nBase = nFromIdx + 1;
+// 	for (int i = nBase; i <= nTopIdx; i++)
+// 	{
+// 		double d1;
+// 		GetDataByIdx(i, d1);
+// 		srcArr.push_back(d1);
+// 		diffArr.push_back(d1 - nLastVal);
+// 		nLastVal = d1;
+// 	}
+// 
+// 	int nSubRange = 9;
+// 	int nStep = nSubRange / 2;
+// 	vector<int > diffArr2;
+// 	for (int i = nStep; i < diffArr.size() - nStep; i++)
+// 	{
+// 		int nTotal = 0;
+// 		for (int j = i - nStep; j < (i - nStep) + nSubRange; j++)
+// 		{
+// 			nTotal += diffArr[j]; 
+// 		}
+// 		nTotal /= nSubRange;
+// 		diffArr2.push_back(nTotal);
+// 	}
+// 
+// 	int nIdx = 0;
+// 	for (int i = nBase; i <= nTopIdx; i++)
+// 	{
+// 		if (i < nBase + nStep ||
+// 			i > nTopIdx - nStep)
+// 		{
+// 			continue;
+// 		}
+// 		double d1 = srcArr[i - nBase];
+// 		d1 += diffArr2[nIdx++];
+// 		SetDataByIdx(i, d1);
+// 	}
+// }
+
+void CCheFileData::SmoothWave(int nWaveIdx)
+{
+	sJfItem2 itemWave;
+	if(!GetWaveByIdx(nWaveIdx, itemWave))
+	{
+		return ;
+	}
+
+	int nFromIdx = itemWave.nBeginDataIdx;
+	int nTopIdx = itemWave.nTopDataIdx;
+	int nToIdx = itemWave.nEndDataIdx;
+
+	map<int, int>	keyPointMap;
+
+	double dLast = -100000;
+	for (int i = nFromIdx; i <= nTopIdx; i++)
+	{	
+		double d1;
 		GetDataByIdx(i, d1);
-		GetDataByIdx(i+1, d2);
-		if (abs(d1 - d2) > val_offset)
+		if ((d1 - dLast) > 2)
 		{
-			if (d2 > d1)
-			{
-				SetDataByIdx(i+1, d1+val_offset);
-			}
-			else
-			{
-				SetDataByIdx(i+1, d1-val_offset);
-			}
+			keyPointMap[i] = d1;
+			dLast = d1;
 		}
 	}
 
-	for (int i = nIdxTo; i < nEndPos2 - 1; i++)
-	{
-		double d1, d2;
+	dLast = -100000;
+	for (int i = nToIdx; i >= nTopIdx; i--)
+	{	
+		double d1;
 		GetDataByIdx(i, d1);
-		GetDataByIdx(i+1, d2);
-		if (abs(d1 - d2) > val_offset)
+		if ((d1 - dLast) > 2)
 		{
-			if (d2 > d1)
+			keyPointMap[i] = d1;
+			dLast = d1;
+		}	
+	}
+
+	int nLastSet = 0;
+	vector<int> arrIn;
+	int nLastIdx = 0;
+	for (auto iter = keyPointMap.begin(); iter != keyPointMap.end(); iter++)
+	{
+		arrIn.push_back(iter->second);
+		if (arrIn.size() == 2)
+		{
+			int nCurIdx = iter->first;
+			vector<int> outArr;
+			MakeLineVal(arrIn[0], arrIn[1], nCurIdx - nLastIdx, false, true, outArr);
+			arrIn.clear();
+			arrIn.push_back(iter->second);
+			for (int i = nLastIdx; i < nCurIdx; i++)
 			{
-				SetDataByIdx(i+1, d1+val_offset);
-			}
-			else
-			{
-				SetDataByIdx(i+1, d1-val_offset);
+				//assert(nLastSet != outArr[i - nLastIdx]);
+				nLastSet = outArr[i - nLastIdx];
+				SetDataByIdx(i, nLastSet);
 			}
 		}
+		nLastIdx = iter->first;
 	}
+}
+
+long CCheFileData::OffsetHPos(vector<DWORD>& arrdatas, int nMidPos, int nPosOffset1, int nPosOffset2, double fZoom)
+{
+	nMidPos += 10;
+	int nIdx = 0;	
+	int nDiff = nPosOffset2 - nPosOffset1;
+ 	double nstep = (nPosOffset2 - nPosOffset1) * 1.0 / (arrdatas.size() - nMidPos);
+	double nof = 1;
+	int nMax = 0;
+	int nLast = 0;
+	long lLastVal = -1000;
+	double lH = DataToValue(arrdatas[nMidPos]);
+	double lM = DataToValue(arrdatas[0]);
+	double lHnew = lH * fZoom;
+	for (auto iter = arrdatas.begin(); iter != arrdatas.end(); iter++)
+	{
+		long l = DataToValue(*iter);
+		l = ((double)l - lM) * 1.0 / (lH - lM) * lHnew + lM;
+		l += nPosOffset1;
+		if (l > nMax)
+		{
+			nMax = l;
+		}
+		
+		if (nIdx++ > nMidPos)
+		{
+			nof += nstep;
+			l += nof;
+			if (l > nMax)
+			{
+				l = nMax - nstep;
+				if (nLast != 0)
+				{
+					if (nLast == l)
+					{
+						l -= nDiff;
+					}
+				}
+				nLast = l;
+			}
+
+			if (lLastVal - l < 1)
+			{
+				l = lLastVal + (l - lLastVal)/2;
+			}
+		}
+		*iter = ValueToData(l);
+		lLastVal = l;
+		TRACE(L"%d\n", l);
+	}
+	return nMax;
+}
+
+bool CCheFileData::FixWave(int nWaveIdx, const char* sFile)
+{
+	sWaveInfo wi;
+	if (!LoadWave(sFile, wi))
+	{
+		return false;
+	}
+
+	sJfItem2 & item1 = m_sCheData.sJfData2.verItems[nWaveIdx];
+	int nOffsetH = item1.nTopHFrom;
+	long lMax = OffsetHPos(wi.datas, wi.item.nTopDataIdx - wi.item.nBeginDataIdx, nOffsetH, item1.nTopHTo, (double)item1.nTopHVal * 1.0 / wi.item.nTopHVal);
+
+	double fNewWaveWidth = IdxToTime(item1.nEndDataIdx - item1.nBeginDataIdx);
+	if(ChangeWaveTimeWidth(nWaveIdx, fNewWaveWidth, &wi))
+	{
+		int nBak = lMax - item1.nTopHVal;
+		item1.nTopHVal = lMax;
+		item1.nTopHPos = item1.nTopHPos + nBak;
+
+	//	ChangeWaveTop(nWaveIdx, nBak);
+	}
+
+
+	return true;
 }
 
 void CCheFileData::NormalizeWave(int nWaveIdx)
@@ -748,6 +1006,13 @@ bool CCheFileData::ChangeWaveSqrt(int nIdx, int nSqrt)
 	return true;
 }
 
+void CCheFileData::FillStep(int nIdxFrom, int nIdxTo, int nTopFrom, int nTopTo)
+{
+	int nTopDiff = nTopTo - nTopFrom;
+	int nIdxDiff = nIdxTo - nIdxFrom;
+	double dNode = (double)nTopDiff / nIdxDiff;
+}
+
 bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 {
 	if (nIdx >= GetWaveCnt() || nTop  < 1)
@@ -772,6 +1037,9 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 	int nleftNewH = nTop - sItem.nTopHFrom;
 	int nrightNewH = nTop - sItem.nTopHTo;
 
+// 	int nleftNewH = nTop - sItem.nTopHFrom < sItem.nTopHTo ? sItem.nTopHFrom : sItem.nTopHTo;
+// 	int nrightNewH = nTop - sItem.nTopHFrom < sItem.nTopHTo ? sItem.nTopHFrom : sItem.nTopHTo;
+
 	int nIdxFrom = sItem.nBeginDataIdx;
 	int nIdxTo = sItem.nTopDataIdx;
 	double dMin = 0;
@@ -792,7 +1060,7 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 			}
 			if (dLast != -9999 && dLast - dNew > 1)
 			{
-				dNew = dLast - 1;
+				dNew = dLast - (dLast - dNew)/2;
 			}
 			SetDataByIdx(i, dNew);
 			dLast = dNew;
@@ -820,7 +1088,7 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 			}
 			if (dLast != -9999 && dNew - dLast> 1)
 			{
-				dNew = dLast + 1;
+				dNew = dLast + (dNew - dLast)/2;
 			}
 			SetDataByIdx(i, dNew);
 			dLast = dNew;
@@ -830,6 +1098,8 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 			}
 		}
 	}
+
+	SmoothWave(nIdx);
 
 	sItem.nTopHVal = nTop;
 	//sItem.nTopHPos *= fZoom;
@@ -999,16 +1269,18 @@ void GetNewTimes(double fRangeFrom, double fRangeTo, double f1, double f2, doubl
 	}
 }
 
-bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth)
+bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth, sWaveInfo * pInputWave)
 {
 	int nWaveCnt = GetWaveCnt();
 	if (nIdx >= nWaveCnt)
 	{
 		return false;
 	}
-
+	
+	int nRangeData = GetDataCnt();
+	bool bOutRange = true;
 	float fRangeFrom = 0;
-	float fRangeTo = IdxToTime(GetDataCnt() - 2);
+	float fRangeTo = IdxToTime(nRangeData - 2);
 	if (nIdx > 0)
 	{
 		fRangeFrom = IdxToTime(m_sCheData.sJfData2.verItems.at(nIdx - 1).nEndDataIdx);
@@ -1016,12 +1288,25 @@ bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth)
 	if (nIdx + 1 < nWaveCnt)
 	{
 		fRangeTo = IdxToTime(m_sCheData.sJfData2.verItems.at(nIdx + 1).nBeginDataIdx);
+		bOutRange = false;
 	}
 
 	if (tWidth > fRangeTo - fRangeFrom)
 	{
-		m_lastErr.Format(L"输入值超出范围，该值应小于%.3f", (int)((fRangeTo - fRangeFrom)*1000) / 1000.0);
-		return false;
+		if (bOutRange)
+		{
+			fRangeTo = fRangeFrom + tWidth + 1;
+			int nAddRangeData = TimeToIdx(fRangeTo) - nRangeData;
+			if (nAddRangeData > 0)
+			{
+				AppendDatas(nAddRangeData);
+			}		
+		}
+		else
+		{
+			m_lastErr.Format(L"输入值超出范围，该值应小于%.3f", (int)((fRangeTo - fRangeFrom)*1000) / 1000.0);
+			return false;
+		}
 	}
 
 
@@ -1068,7 +1353,7 @@ bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth)
 		}
 	}
 
-	if(ChangeWaveTimeRange(nIdx, dNewFromTime, dNewToTime))
+	if(ChangeWaveTimeRange(nIdx, dNewFromTime, dNewToTime, pInputWave))
 	{
 		sItem.nBeginDataIdx = TimeToIdx(dNewFromTime);
 		sItem.nEndDataIdx = TimeToIdx(dNewToTime);
@@ -1088,6 +1373,59 @@ void PushVal(int nv1, int nv2, int nIdx, int nRange, vector<int> & arrOutData)
 	double dNode = dcnt / nRange;
 	double dv = nv1 + nIdx * dNode;
 	arrOutData.push_back((int)dv);
+}
+
+void _ZoomTimeData(vector<int> & arrInData, int nNewCnt, vector<int> & arrOutData)
+{
+	arrOutData.clear();
+
+	int nInputSize = arrInData.size();
+	if ( nInputSize < 1 )
+	{
+		return;
+	}
+
+	if (nInputSize == 1)
+	{
+		for (int i = 0; i  < nNewCnt; i++)
+		{
+			arrOutData.push_back(arrInData[0]);
+		}
+	}
+	else if (nInputSize == 2)
+	{
+		MakeLineVal(arrInData[0], arrInData[1], nNewCnt, true, true, arrOutData);
+	}
+	else
+	{
+		int nNewSz = nInputSize;
+		double delta= nNewCnt*1.0 / nNewSz;
+
+		double dtotal = 0;
+		for(int i = 0; i < nNewSz - 1; i++)
+		{
+			dtotal += delta;
+			int nNodeCnt = (int)(dtotal);
+			dtotal -= nNodeCnt;
+			if (nNewSz - 2 == i)
+			{
+				nNodeCnt += (int)(dtotal+delta+0.000001);
+			}
+
+			vector<int> arr;
+			int nVal = arrInData[i];
+			int nValNext = arrInData[i + 1];
+			MakeLineVal(nVal, nValNext, nNodeCnt, i == 0 ? true : false, true, arr);
+			for (int j = 0; j < arr.size(); j++)
+			{
+				arrOutData.push_back(arr[j]);
+			}
+		}
+
+		TRACE(L"%f\n", dtotal);
+	}
+	
+	assert(arrOutData.size() == nNewCnt);
 }
 
 void _ZoomTimeData(CCheFileData * pData, int nIdxFrom, int nIdxTo, int nNewCnt, vector<int> & arrOutData)
@@ -1221,7 +1559,7 @@ void ZoomTimeData(CCheFileData * pData, int nIdxFrom, int nIdxTo, int nNewCnt, v
 	assert(nNewCnt == arrOutData.size());
 }
 
-bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd)
+bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd, sWaveInfo * pInputWave)
 {
 	int nWaveCnt = GetWaveCnt();
 	if (nIdx >= nWaveCnt)
@@ -1236,27 +1574,50 @@ bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd)
 	}
 
 	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nIdx);
-	int nOldTop = sItem.nTopHVal;
-	int nIdxFrom = sItem.nBeginDataIdx;
-	int nIdxTo = sItem.nEndDataIdx;
-	int nIdxTop = sItem.nTopDataIdx;
-
+	vector<int> arrLeftData;
+	vector<int> arrRightData;
 	int nIdxNewFrom = TimeToIdx(tFrom);
 	int nIdxNewTo = TimeToIdx(tEnd);
+	int nIdxTop = sItem.nTopDataIdx;
+	if (!pInputWave)
+	{	
+		int nIdxFrom = sItem.nBeginDataIdx;
+		int nIdxTo = sItem.nEndDataIdx;
+		if (nIdxNewFrom >= nIdxTop)
+		{
+			return false;
+		}
+		if (nIdxNewTo <= nIdxTop)
+		{
+			return false;
+		}
 
-	if (nIdxNewFrom >= nIdxTop)
-	{
-		return false;
+		_ZoomTimeData(this, nIdxFrom, nIdxTop, nIdxTop - nIdxNewFrom, arrLeftData);
+		_ZoomTimeData(this, nIdxTop, nIdxTo, nIdxNewTo - nIdxTop, arrRightData);
 	}
-	if (nIdxNewTo <= nIdxTop)
+	else
 	{
-		return false;
-	}
+		vector<int> larr;
+		vector<int> rarr;
 
-	vector<int> arrLeftData;
-	_ZoomTimeData(this, nIdxFrom, nIdxTop, nIdxTop - nIdxNewFrom, arrLeftData);
-	vector<int> arrRightData;
-	_ZoomTimeData(this, nIdxTop, nIdxTo, nIdxNewTo - nIdxTop, arrRightData);
+		int nlc = (pInputWave->item.nTopDataIdx - pInputWave->item.nBeginDataIdx) + 1;
+		int nrc = pInputWave->item.nEndDataIdx - pInputWave->item.nTopDataIdx;
+
+		for (int i = 0; i < pInputWave->item.nEndDataIdx - pInputWave->item.nBeginDataIdx; i++)
+		{
+			if (i < nlc)
+			{
+				larr.push_back(DataToValue(pInputWave->datas[i]));
+			}
+			else
+			{
+				rarr.push_back(DataToValue(pInputWave->datas[i]));
+			}	
+		}
+
+		_ZoomTimeData(larr, nIdxTop - nIdxNewFrom, arrLeftData);
+		_ZoomTimeData(rarr, nIdxNewTo - nIdxTop, arrRightData);
+	}
 
 	NormalizeWave(nIdx);
 	
@@ -1264,10 +1625,15 @@ bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd)
 	{
 		SetDataByIdx(i + nIdxNewFrom, arrLeftData[i]);
 	}
+
+	int nVal = 0;
 	for (int i = 0; i < arrRightData.size(); i++)
 	{
-		SetDataByIdx(i + nIdxTop, arrRightData[i]);
+		nVal = arrRightData[i];
+		SetDataByIdx(i + nIdxTop, nVal);
 	}
+
+	SetDataByIdx(arrRightData.size() + nIdxTop, nVal);
 
 	return true;
 }
@@ -1432,10 +1798,35 @@ int	CCheFileData::AddWave(double tLiveTime, double tWidth, int nTopValue, double
 		return -1;
 	}
 
+	int nNewItemIdx = GetWaveCnt() - 1;
 
+	do 
+	{
+		bool bOK = true;
+		if (abs(TimeToIdx(tWidth) - (item.nEndDataIdx - item.nBeginDataIdx)) >= 1)
+		{
+			bOK = ChangeWaveTimeWidth(nNewItemIdx, tWidth);
+		}
 
+		if (bOK && abs(nTopValue - item.nTopHVal) >= 1)
+		{
+			bOK = ChangeWaveTop(nNewItemIdx, nTopValue);
+		}
 
-	return 0;
+		if (bOK && dSqrt != item.nTopSqrt)
+		{
+			bOK = ChangeWaveSqrt(nNewItemIdx, dSqrt);
+		}
+
+		if (!bOK)
+		{
+			break;
+		}
+		return nNewItemIdx;
+	} while (false);
+	
+	RemoveWave(nNewItemIdx);
+	return -1;
 }
 
 void CCheFileData::AppendTimes(float nTimes)
@@ -1505,6 +1896,83 @@ void CCheFileData::AppendDatas(int nTimes)
 
 	m_sCheData.nDataCnt = m_sCheData.verMainDatas.size();
 	*m_sCheData.nDataCnt2 = m_sCheData.nDataCnt;
+}
+
+bool CCheFileData::SaveWave(int nIdxWave, const char * sFile)
+{
+	sJfItem2 item;
+	
+	if(!GetWaveByIdx(nIdxWave, item))
+	{
+		return false;
+	}
+
+	FILE * fp = fopen(sFile, "wb");
+	if (!fp)
+	{
+		return false;
+	}
+
+	fwrite(&item, 1, sizeof(item), fp);
+
+	long lLast = 0;
+	DWORD * pDatas = new DWORD[item.nEndDataIdx - item.nBeginDataIdx + 1];
+	for (int i = item.nBeginDataIdx; i <= item.nEndDataIdx; i++)
+	{
+		long lv = DataToValue(m_sCheData.verMainDatas.at(i));
+		lv -= item.nTopHFrom;
+		if (i <= item.nTopDataIdx)
+		{
+			if (lv < lLast)
+			{
+				lv = lLast + 1;
+			}
+		}
+		else
+		{
+			if (lv > lLast)
+			{
+				lv = lLast - 1;
+			}
+		}
+		if (lv < 0)
+		{
+			lv = 0;
+		}
+		lLast = lv;
+		pDatas[i - item.nBeginDataIdx] = ValueToData(lv);
+	}
+		
+	fwrite(pDatas, 4, item.nEndDataIdx - item.nBeginDataIdx + 1, fp);
+	delete [] pDatas;
+
+	fclose(fp);
+
+	return true;
+}
+
+bool CCheFileData::LoadWave(const char * sFile, sWaveInfo & info)
+{
+	FILE * fp = fopen(sFile, "rb");
+	if (!fp)
+	{
+		return false;
+	}
+	sJfItem2 & item = info.item;
+
+	int ns = fread(&item, 1, sizeof(item), fp);
+	assert(ns == sizeof(sJfItem2));
+
+	DWORD * pDatas = new DWORD[item.nEndDataIdx - item.nBeginDataIdx + 1];
+	ns = fread(pDatas, 4, info.item.nEndDataIdx - item.nBeginDataIdx + 1, fp);	
+	assert(ns == item.nEndDataIdx - item.nBeginDataIdx + 1);
+	info.datas.resize(item.nEndDataIdx - item.nBeginDataIdx + 1);
+	memcpy((LPBYTE)info.datas.data(), pDatas, ns*4);
+
+	delete [] pDatas;
+
+	fclose(fp);
+	return true;
 }
 
 void CCheFileData::Clear()

@@ -104,6 +104,12 @@ struct sCheData
 	float fTopSqrtTotal;
 };
 
+struct sWaveInfo
+{
+	sJfItem2		item;
+	vector<DWORD>	datas;
+};
+
 class CCheFileData
 {
 public:
@@ -119,6 +125,9 @@ public:
 	sCheData * GetData(){return &m_sCheData;}
 
 public:
+	bool	SaveWave(int, const char *);
+	bool	LoadWave(const char*, sWaveInfo &);
+
 	void	ChangeTimes(DATE dtCreate);
 	static long	DataToValue(long);
 	static long	ValueToData(long);
@@ -141,11 +150,14 @@ public:
 
 	bool	ChangeWaveSqrt(int, int );
 	bool	ChangeWaveTop(int, int );
-	bool	ChangeWaveTimeWidth(int, double tWidth);
-	bool	ChangeWaveTimeRange(int, double tFrom, double tEnd);
+	bool	ChangeWaveTimeWidth(int, double tWidth, sWaveInfo * pInputWave = NULL);
+	bool	ChangeWaveTimeRange(int, double tFrom, double tEnd, sWaveInfo * pInputWave = NULL);
 	bool	ChangeWaveTimePos(int, double tLive, bool bcopyMode = false);
+
 	void	NormalizeWave(int);
 	void	FixWaveEdge(int);
+	bool	FixWave(int, const char* sFile);
+	void	SmoothWave(int);
 	bool	ResetStdWave(int nWaveIdx, int nFromIdx, int nToIdx, long lTop);
 	CString GetLastErr(){return m_lastErr;}
 
@@ -156,10 +168,11 @@ public:
 protected:
 	void	Clear();
 	void	ZoomWave(int nIdx, float fZoom);
+	void	FillStep(int nFromIdx, int nToIdx, int nTopFrom, int nTopTo);
 
 	int		TestTimeRange(double dFrom, double dTo, int butIdx);
 	int		GetRandomVal(int, int, int nIdx, int nTimeRange);
-
+	long	OffsetHPos(vector<DWORD>& arrdatas, int nMidPos, int nPosOffset1, int nPosOffset2, double fZoom = 1.0);
 protected:
 	sCheData	m_sCheData;
 	CString		m_strInputfile;
