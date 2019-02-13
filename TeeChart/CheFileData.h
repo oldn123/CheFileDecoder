@@ -180,5 +180,7 @@ protected:
 protected:
 	int			m_nSaveDataFromIdx;
 	CString		m_lastErr;
+	int			m_nNorLineWidthStep;	
+	int			m_nNorLineHeightStep;
 };
 

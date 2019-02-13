@@ -960,9 +960,22 @@ void CCheFileData::NormalizeWave(int nWaveIdx)
 	double dv1, dv2;
 	GetDataByIdx(nIdxFrom - 1, dv1);
 	GetDataByIdx(nIdxTo + 1, dv2);
-	for (int i = nIdxFrom; i <= nIdxTo; i++)
+	double dfrom = dv1;
+	double dDiff = dv2 - dv1;
+	int nLen = nIdxTo - nIdxFrom + 1;
+	int nLast = 0;
+	for (int i = nIdxFrom; i <= nIdxTo; )
 	{
-		SetDataByIdx(i, GetRandomVal(dv1, dv2, i - nIdxFrom, nIdxTo - nIdxFrom));
+		int nWStep = (int)rand() % m_nNorLineWidthStep + 1;
+		dv2 = (i - nIdxFrom + nWStep) / nLen * dDiff + (int)rand() % (int)(2*m_nNorLineHeightStep) - m_nNorLineHeightStep;
+		for (int j = 0; j < nWStep; j++)
+		{
+			double dv = dfrom + GetRandomVal(nLast, dv2, j, nWStep);
+			SetDataByIdx(i + j, dv);
+			TRACE(L"---%f\n", dv);
+		}
+		i += nWStep;
+		nLast = dv2;	
 	}
 }
 
@@ -1642,7 +1655,7 @@ bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd, sWav
 int	CCheFileData::GetRandomVal(int nFrom, int nTo, int nIdx, int nTimeRange)
 {
 	int nRange = nTo - nFrom + 1;
-	float fnode = nRange / nTimeRange;
+	double fnode = (double)nRange / nTimeRange;
 	double rval = 0;//(int)rand() % (int)(2*val_offset) - val_offset;
 	nFrom += (nIdx * fnode  + rval);
 	return nFrom;
@@ -1980,6 +1993,8 @@ void CCheFileData::Clear()
 {
 	srand(time(NULL));
 	m_nSaveDataFromIdx = 0;
+	m_nNorLineWidthStep = 5;	
+	m_nNorLineHeightStep= 5;
 
 	memset(&m_sCheData.sVer[0], 0, 0x22);
 	m_sCheData.nDataCnt = 0;
@@ -2016,4 +2031,5 @@ void CCheFileData::Clear()
 	m_sCheData.sJgData.verItems.clear();
 
 	m_sCheData.fTopSqrtTotal = 0;
+	
 }
