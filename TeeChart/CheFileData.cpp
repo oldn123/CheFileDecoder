@@ -88,6 +88,7 @@ void CCheFileData::DoInit()
 	dog_status_t ret = dog_login(100, vendorCode, &hdog);
 	if (ret != DOG_STATUS_OK)
 	{
+		MessageBox(NULL, L"Î´¼ì²âµ½¼ÓÃÜ¹·£¡", L"´íÎó", MB_ICONERROR);
 		_exit(0);
 	}
 	memset(g_sSign, 0, 10);
@@ -110,12 +111,12 @@ void CCheFileData::DoInit()
 				btryok = false;
 				break;
 			}
-			if (dtNow.GetMonth() >= 2 )
+			if (dtNow.GetMonth() != 2 )
 			{
 				btryok = false;
 				break;
 			}
-			if (dtNow.GetDay() < 21)
+			if (dtNow.GetDay() > 23)
 			{
 				btryok = false;
 				break;
@@ -1923,16 +1924,16 @@ bool CCheFileData::SaveWave(int nIdxWave, const char * sFile)
 		lv -= item.nTopHFrom;
 		if (i <= item.nTopDataIdx)
 		{
-			if (lv < lLast)
+			if (lv < lLast-3)
 			{
-				lv = lLast + 1;
+				lv = lLast-3 + 1;
 			}
 		}
 		else
 		{
-			if (lv > lLast)
+			if (lv > lLast+3)
 			{
-				lv = lLast - 1;
+				lv = lLast+3 - 1;
 			}
 		}
 		if (lv < 0)
