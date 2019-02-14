@@ -47,6 +47,25 @@ void CCheFileData::NormalizeWave(int nWaveIdx)
 	}
 }
 
+void CCheFileData::FixWaveBottomLine(int nWaveIdx)
+{
+	sJfItem & sItem1 = m_sCheData.sJfData.verItems.at(nWaveIdx);
+	sJfItem2 & sItem2 = m_sCheData.sJfData2.verItems.at(nWaveIdx);
+	int nIdxFrom = sItem2.nBeginDataIdx;
+	int nIdxTo = sItem2.nEndDataIdx;
+	sItem1.fTimeFrom = IdxToTime(nIdxFrom);
+	sItem1.fTimeTo = IdxToTime(nIdxTo);
+	double d1, d2;
+	GetDataByIdx(sItem2.nBeginDataIdx, d1);
+	GetDataByIdx(sItem2.nEndDataIdx, d2);
+
+	sItem2.nTopHFrom = d1;
+	sItem2.nTopHTo = d2;
+
+	sItem1.fPowerFrom = sItem2.nTopHFrom;
+	sItem1.fPowerTo = sItem2.nTopHTo;
+}
+
 
 void CCheFileData::MakeLineVal(int nfrom, int nto, int ncnt, bool bHasLeft, bool bHasRigth, vector<int> & arr)
 {
@@ -863,7 +882,7 @@ void CCheFileData::SmoothWave(int nWaveIdx)
 	map<int, int>	keyPointMap;
 
 	double dLast = -100000;
-	for (int i = nFromIdx; i <= nTopIdx; i++)
+	for (int i = nFromIdx+1; i <= nTopIdx; i++)
 	{	
 		double d1;
 		GetDataByIdx(i, d1);
@@ -875,7 +894,7 @@ void CCheFileData::SmoothWave(int nWaveIdx)
 	}
 
 	dLast = -100000;
-	for (int i = nToIdx; i >= nTopIdx; i--)
+	for (int i = nToIdx-1; i >= nTopIdx; i--)
 	{	
 		double d1;
 		GetDataByIdx(i, d1);
@@ -1139,6 +1158,9 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 	sItem.nTopHVal = nTop;
 	sItem.nTopHPos = nMaxPos;
 
+
+	FixWaveBottomLine(nIdx);
+
 	return true;
 }
 
@@ -1397,6 +1419,7 @@ bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth, sWaveInfo * pInp
 		si.fTimeTo = dNewToTime;
 // 		si.fPowerFrom = 0;
 // 		si.fPowerTo = 0;
+		FixWaveBottomLine(nIdx);
 		return true;
 	}
 	return false;
@@ -1823,7 +1846,7 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive, bool bcopyMode)
 	}
 
 	FixWaveEdge(nIdx);
-
+	FixWaveBottomLine(nIdx);
 	return true;
 }
 

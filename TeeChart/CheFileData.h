@@ -176,6 +176,7 @@ protected:
 
 	void	MakeLineVal(int nfrom, int nto, int ncnt, bool bHasLeft, bool bHasRigth, vector<int> & arr);
 	void	_ZoomTimeData(vector<int> & arrInData, int nNewCnt, vector<int> & arrOutData);
+	void	FixWaveBottomLine(int);
 protected:
 	sCheData	m_sCheData;
 	CString		m_strInputfile;
