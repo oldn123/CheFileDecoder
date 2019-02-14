@@ -27,8 +27,28 @@ int	g_nNodeSize = 0;
 
 void _ZoomTimeData(vector<int> & arrInData, int nNewCnt, vector<int> & arrOutData);
 
+void CCheFileData::NormalizeWave(int nWaveIdx)
+{
+	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nWaveIdx);
+	int nIdxFrom = sItem.nBeginDataIdx;
+	int nIdxTo = sItem.nEndDataIdx;
 
-void MakeLineVal(int nfrom, int nto, int ncnt, bool bHasLeft, bool bHasRigth, vector<int> & arr)
+	double dv1, dv2;
+	GetDataByIdx(nIdxFrom - 1, dv1);
+	GetDataByIdx(nIdxTo + 1, dv2);
+	int nLen = nIdxTo - nIdxFrom + 1;
+
+	vector<int> arrDatas;
+	MakeLineVal(dv1, dv2, nLen, true, true, arrDatas);
+
+	for (int i = nIdxFrom; i <= nIdxTo; i++)
+	{
+		SetDataByIdx(i, arrDatas[i - nIdxFrom]);
+	}
+}
+
+
+void CCheFileData::MakeLineVal(int nfrom, int nto, int ncnt, bool bHasLeft, bool bHasRigth, vector<int> & arr)
 {
 	arr.clear();
 	if (ncnt < 1)
@@ -65,15 +85,32 @@ void MakeLineVal(int nfrom, int nto, int ncnt, bool bHasLeft, bool bHasRigth, ve
 		}
 		double delta=(nto-nfrom)*1.0/nrc;   
 		arr.reserve(ncnt);
-		for (int N=nFromVal; N<nToVal; N++)   
-		{   
-			arr.push_back((int)((nfrom + delta*N)+0.5));
-		}  
+
+		int nLast = 0;
+		for (int i = nFromVal; i < nToVal; )
+		{
+			int nWStep = (int)rand() % m_nNorLineWidthStep + 1;
+			if (nWStep + i > nToVal)
+			{
+				nWStep = nToVal - i;
+			}
+
+			double dv2 = (i - nFromVal + nWStep) * delta  + (int)rand() % (int)(2*m_nNorLineHeightStep) - m_nNorLineHeightStep;
+			for (int j = 0; j < nWStep; j++)
+			{
+				double dv = nfrom + GetRandomVal(nLast, dv2, j, nWStep);
+				arr.push_back((int)(dv+0.5));
+			}
+			i += nWStep;
+			nLast = dv2;	
+		}
 	}
 	else
 	{
-		arr.push_back(nfrom + (nto - nfrom) / 2);
+		arr.push_back(nfrom + (int)rand() % (int)(2*m_nNorLineHeightStep) - m_nNorLineHeightStep + (nto - nfrom) / 2);
 	}
+
+	assert(arr.size() == ncnt);
 }
 
 
@@ -682,7 +719,7 @@ void GetWavePoints(int nHeight, int nFrom, int nTo, long * aPoint)
 	for(int i=0;i<nWidth;i++)
 	{
 		long lv = nHeight - (int)((nHeight)*(1-(sin(2*PI*i/nWidth / 2))));
-		TRACE(L"-----%d\n", lv);
+		//TRACE(L"-----%d\n", lv);
 		aPoint[i] = CCheFileData::ValueToData(lv);
 	}
 }
@@ -729,7 +766,7 @@ void CCheFileData::FixWaveEdge(int nWaveIdx)
 	int nIdx = 0;
 	double d1, d2;
 	GetDataByIdx(nIdxFrom, d1);
-	GetDataByIdx(nEndPos1 + 1, d2);
+	GetDataByIdx(nEndPos1, d2);
 
 	vector<int> arrInput, arrOutput;
 	arrInput.push_back(d1);
@@ -920,7 +957,7 @@ long CCheFileData::OffsetHPos(vector<DWORD>& arrdatas, int nMidPos, int nPosOffs
 		}
 		*iter = ValueToData(l);
 		lLastVal = l;
-		TRACE(L"%d\n", l);
+		//TRACE(L"%d\n", l);
 	}
 	return nMax;
 }
@@ -949,34 +986,6 @@ bool CCheFileData::FixWave(int nWaveIdx, const char* sFile)
 
 
 	return true;
-}
-
-void CCheFileData::NormalizeWave(int nWaveIdx)
-{
-	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nWaveIdx);
-	int nIdxFrom = sItem.nBeginDataIdx;
-	int nIdxTo = sItem.nEndDataIdx;
-
-	double dv1, dv2;
-	GetDataByIdx(nIdxFrom - 1, dv1);
-	GetDataByIdx(nIdxTo + 1, dv2);
-	double dfrom = dv1;
-	double dDiff = dv2 - dv1;
-	int nLen = nIdxTo - nIdxFrom + 1;
-	int nLast = 0;
-	for (int i = nIdxFrom; i <= nIdxTo; )
-	{
-		int nWStep = (int)rand() % m_nNorLineWidthStep + 1;
-		dv2 = (i - nIdxFrom + nWStep) / nLen * dDiff + (int)rand() % (int)(2*m_nNorLineHeightStep) - m_nNorLineHeightStep;
-		for (int j = 0; j < nWStep; j++)
-		{
-			double dv = dfrom + GetRandomVal(nLast, dv2, j, nWStep);
-			SetDataByIdx(i + j, dv);
-			TRACE(L"---%f\n", dv);
-		}
-		i += nWStep;
-		nLast = dv2;	
-	}
 }
 
 bool CCheFileData::ResetStdWave(int nWaveIdx, int nFromIdx, int nToIdx, long lTop)
@@ -1375,6 +1384,8 @@ bool CCheFileData::ChangeWaveTimeWidth(int nIdx, double tWidth, sWaveInfo * pInp
 		auto & si = m_sCheData.sJfData.verItems.at(nIdx);
 		si.fTimeFrom = dNewFromTime;
 		si.fTimeTo = dNewToTime;
+// 		si.fPowerFrom = 0;
+// 		si.fPowerTo = 0;
 		return true;
 	}
 	return false;
@@ -1389,7 +1400,7 @@ void PushVal(int nv1, int nv2, int nIdx, int nRange, vector<int> & arrOutData)
 	arrOutData.push_back((int)dv);
 }
 
-void _ZoomTimeData(vector<int> & arrInData, int nNewCnt, vector<int> & arrOutData)
+void CCheFileData::_ZoomTimeData(vector<int> & arrInData, int nNewCnt, vector<int> & arrOutData)
 {
 	arrOutData.clear();
 
@@ -1436,7 +1447,7 @@ void _ZoomTimeData(vector<int> & arrInData, int nNewCnt, vector<int> & arrOutDat
 			}
 		}
 
-		TRACE(L"%f\n", dtotal);
+		//TRACE(L"%f\n", dtotal);
 	}
 	
 	assert(arrOutData.size() == nNewCnt);
@@ -1606,8 +1617,8 @@ bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd, sWav
 			return false;
 		}
 
-		_ZoomTimeData(this, nIdxFrom, nIdxTop, nIdxTop - nIdxNewFrom, arrLeftData);
-		_ZoomTimeData(this, nIdxTop, nIdxTo, nIdxNewTo - nIdxTop, arrRightData);
+		::_ZoomTimeData(this, nIdxFrom, nIdxTop, nIdxTop - nIdxNewFrom, arrLeftData);
+		::_ZoomTimeData(this, nIdxTop, nIdxTo, nIdxNewTo - nIdxTop, arrRightData);
 	}
 	else
 	{

@@ -173,6 +173,9 @@ protected:
 	int		TestTimeRange(double dFrom, double dTo, int butIdx);
 	int		GetRandomVal(int, int, int nIdx, int nTimeRange);
 	long	OffsetHPos(vector<DWORD>& arrdatas, int nMidPos, int nPosOffset1, int nPosOffset2, double fZoom = 1.0);
+
+	void	MakeLineVal(int nfrom, int nto, int ncnt, bool bHasLeft, bool bHasRigth, vector<int> & arr);
+	void	_ZoomTimeData(vector<int> & arrInData, int nNewCnt, vector<int> & arrOutData);
 protected:
 	sCheData	m_sCheData;
 	CString		m_strInputfile;
