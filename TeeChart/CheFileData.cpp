@@ -604,7 +604,7 @@ long CCheFileData::DataToValue(long ldt)
 	dwData -= 0x800000;
 	double fData = (int)dwData;
 	fData /= 6.553599834442139;
-	return (long)fData;
+	return (long)(fData+0.5f);
 }
 
 long CCheFileData::ValueToData(long lvar)
@@ -1042,6 +1042,7 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 	{
 		return false;
 	}
+	sJfItem & sItem1 = m_sCheData.sJfData.verItems.at(nIdx);
 	sJfItem2 & sItem = m_sCheData.sJfData2.verItems.at(nIdx);
 	int nleftH = sItem.nTopHVal;// - sItem.nTopHFrom;
 	int nrightH = sItem.nTopHVal;// - sItem.nTopHTo;
@@ -1086,6 +1087,12 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 				dNew = dLast - (dLast - dNew)/2;
 			}
 			SetDataByIdx(i, dNew);
+			if (i == nIdxFrom)
+			{	
+				assert(sItem1.fPowerFrom == dNew);
+				assert(sItem1.fPowerFrom == sItem.nTopHFrom);
+				sItem1.fPowerFrom = sItem.nTopHFrom;
+			}
 			dLast = dNew;
 			if (dNew > nMaxPos)
 			{
@@ -1114,6 +1121,11 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 				dNew = dLast + (dNew - dLast)/2;
 			}
 			SetDataByIdx(i, dNew);
+			if (i == nIdxTo)
+			{
+				assert(sItem1.fPowerTo == sItem.nTopHTo);
+				sItem1.fPowerTo = sItem.nTopHTo;
+			}
 			dLast = dNew;
 			if (dNew > nMaxPos)
 			{
@@ -1125,7 +1137,6 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 	SmoothWave(nIdx);
 
 	sItem.nTopHVal = nTop;
-	//sItem.nTopHPos *= fZoom;
 	sItem.nTopHPos = nMaxPos;
 
 	return true;
@@ -1464,9 +1475,15 @@ void _ZoomTimeData(CCheFileData * pData, int nIdxFrom, int nIdxTo, int nNewCnt, 
 	int nLastVal = 0;
 	double nfCnt = 0;
 	double dItem;
+	double dFromHVal =0;
+	double dToHVal = 0;
 	if(pData->GetDataByIdx(nIdxFrom, dItem))
 	{
 		nLastVal = dItem;
+		dFromHVal = dItem;
+	}
+	if(pData->GetDataByIdx(nIdxTo, dToHVal))
+	{
 	}
 	for(int i = nIdxFrom + 1; i <= nIdxTo; i++)
 	{
@@ -1506,6 +1523,8 @@ void _ZoomTimeData(CCheFileData * pData, int nIdxFrom, int nIdxTo, int nNewCnt, 
 		}	
 	}
 
+// 	arrOutData[0] = dFromHVal;
+// 	arrOutData[arrOutData.size() - 1] = dToHVal;	
 	assert(nNewCnt == arrOutData.size());
 }
 
@@ -1659,6 +1678,15 @@ bool CCheFileData::ChangeWaveTimeRange(int nIdx, double tFrom, double tEnd, sWav
 	}
 
 	SetDataByIdx(arrRightData.size() + nIdxTop, nVal);
+
+	SetDataByIdx(nIdxNewFrom, sItem.nTopHFrom);
+	SetDataByIdx(nIdxNewTo, sItem.nTopHTo);
+
+	double dtmp = 0;
+	GetDataByIdx(nIdxNewFrom, dtmp);
+
+	sItem.nBeginDataIdx = nIdxNewFrom;
+	sItem.nEndDataIdx = nIdxNewTo;
 
 	return true;
 }
