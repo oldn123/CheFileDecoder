@@ -1804,8 +1804,12 @@ bool CCheFileData::ChangeWaveTimePos(int nIdx, double tLive, bool bcopyMode)
 	{
 		NormalizeWave(nIdx);
 
-		sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
-		item.fLiveTime = (float)tLive;
+
+		if (nIdx <  m_sCheData.sJgData.verItems.size())
+		{
+			sJfItem3 & item = m_sCheData.sJgData.verItems[nIdx];
+			item.fLiveTime = (float)tLive;
+		}
 
 		m_sCheData.sJfData.verItems[nIdx].fTimeFrom = tFrom;
 		m_sCheData.sJfData.verItems[nIdx].fTimeTo = tEnd;
