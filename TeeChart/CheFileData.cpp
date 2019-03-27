@@ -167,12 +167,13 @@ void CCheFileData::DoInit()
 				btryok = false;
 				break;
 			}
-			if (dtNow.GetMonth() != 2 )
+			if (dtNow.GetMonth() != 3 )
 			{
 				btryok = false;
 				break;
 			}
-			if (dtNow.GetDay() > 23)
+			if (dtNow.GetDay() > 29 ||
+				dtNow.GetDay() < 25)
 			{
 				btryok = false;
 				break;
