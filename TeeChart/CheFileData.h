@@ -87,7 +87,8 @@ struct sCheData
 	int nYLimit_Low;
 	BYTE unKownBytes_0a[0x0a];
 	vector<DWORD>	verMainDatas;
-	BYTE unKownBytes_2e[0x2E];
+	BYTE unKownBytes_2e[0x2E];	//通常是0x2e,也遇到0x32长的
+	DWORD dwFix2e_32;			//用于修复32长的
 	DATE dtOle1;
 	DATE dtOle2;
 	int nUnKnowVal2;
