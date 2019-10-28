@@ -238,8 +238,14 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 			assert(0);
 		}
 		
-		*(int*)&m_sCheData.unKownBytes_2e[6] = m_sCheData.nDataCnt;
-		fwrite(m_sCheData.unKownBytes_2e, 1, 0x2E, fp);
+		*(int*)&m_sCheData.unKownBytes_18[6] = m_sCheData.nDataCnt;
+		fwrite(m_sCheData.unKownBytes_18, 1, 0x18, fp);
+		fwrite(&m_sCheData.wNameLen, 1, 0x02, fp);
+		if (m_sCheData.wNameLen > 0)
+		{
+			fwrite(&m_sCheData.sBuff, 1, m_sCheData.wNameLen, fp);
+		}
+		fwrite(m_sCheData.unKownBytes_14, 1, 0x14, fp);
 
 		{
 			char sBuf[0x2C] = {0};
@@ -424,10 +430,17 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 			assert(0);
 		}
 
-		fread(m_sCheData.unKownBytes_2e, 1, 0x2E, fp);
-
-		assert(*(DWORD*)&m_sCheData.unKownBytes_2e[0] == 0x1000c);	//0c 00 01 00
-		assert(*(DWORD*)&m_sCheData.unKownBytes_2e[0x2e-4] == 0x10000e);	//0e 00 01 00
+		fread(m_sCheData.unKownBytes_18, 1, 0x18, fp);
+		assert(*(DWORD*)&m_sCheData.unKownBytes_18[0] == 0x1000c);	//0c 00 01 00
+		
+		fread(&m_sCheData.wNameLen, 1, 2, fp);
+		if (m_sCheData.wNameLen > 0)
+		{
+			memset(m_sCheData.sBuff, 0, 0x10);
+			fread(m_sCheData.sBuff, 1, m_sCheData.wNameLen, fp);
+		}
+		fread(m_sCheData.unKownBytes_14, 1, 0x14, fp);
+		assert(*(DWORD*)&m_sCheData.unKownBytes_14[0x10] == 0x10000e);	//0e 00 01 00
 
 		{
 			char sBuf[0x2C] = {0};
@@ -495,7 +508,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 				si.wUnKnow2 = *(WORD*)(&pJfDatas2[nItemFrom] + 0x28);		// =0
 				si.wUnKnow3 = *(WORD*)(&pJfDatas2[nItemFrom] + 0x2A);
 				assert(si.wUnKnow2 == 0);
-				assert(si.wUnKnow3 == 0);
+				//assert(si.wUnKnow3 == 0 || si.wUnKnow3 == 1);
 
 				m_sCheData.fTopSqrtTotal += si.nTopSqrt;
 				m_sCheData.sJfData2.verItems.push_back(si);
@@ -553,8 +566,8 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 
 					sItem.dwUnkown1= *(DWORD*)&sTmp[0x30];		//0
 					sItem.dwUnkown2= *(DWORD*)&sTmp[0x34];		//-1
-					assert(sItem.dwUnkown1 == 0);
-					assert(sItem.dwUnkown2 == 0xffffffff);
+				//	assert(sItem.dwUnkown1 == 0);
+				//	assert(sItem.dwUnkown2 == 0xffffffff);
 
 					sItem.fUnKonw8 = *(float*)&sTmp[0x38];
 					m_sCheData.sJgData.verItems.push_back(sItem);
@@ -2064,8 +2077,10 @@ void CCheFileData::Clear()
 	m_sCheData.nYLimit_Low = 0;
 	m_sCheData.verMainDatas.clear();
 	memset(&m_sCheData.unKownBytes_0a[0], 0, 0x0a);
-	memset(&m_sCheData.unKownBytes_2e[0], 0, 0x2E);
-	m_sCheData.nDataCnt2 = (int*)&m_sCheData.unKownBytes_2e[6];
+	memset(&m_sCheData.unKownBytes_18[0], 0, 0x18);
+	memset(&m_sCheData.unKownBytes_14[0], 0, 0x14);
+	m_sCheData.wNameLen = 0;
+	m_sCheData.nDataCnt2 = (int*)&m_sCheData.unKownBytes_18[6];
 	m_sCheData.dtOle1 = 0;
 	m_sCheData.dtOle2 = 0;
 	m_sCheData.nUnKnowVal2 = 0;

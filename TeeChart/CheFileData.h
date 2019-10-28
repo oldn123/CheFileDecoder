@@ -87,7 +87,12 @@ struct sCheData
 	int nYLimit_Low;
 	BYTE unKownBytes_0a[0x0a];
 	vector<DWORD>	verMainDatas;
-	BYTE unKownBytes_2e[0x2E];
+	/****/	
+	BYTE unKownBytes_18[0x18];
+	WORD wNameLen;
+	char sBuff[0x10];
+	BYTE unKownBytes_14[0x14];
+	/****/
 	DATE dtOle1;
 	DATE dtOle2;
 	int nUnKnowVal2;
