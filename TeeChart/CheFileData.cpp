@@ -156,7 +156,7 @@ void CCheFileData::DoInit()
 #endif
 
 	bool btryok = true;
-	bool btrymode = true;
+	bool btrymode = false;
 	if (btrymode)
 	{
 		COleDateTime dtNow = COleDateTime::GetCurrentTime();
@@ -1091,8 +1091,8 @@ bool CCheFileData::ChangeWaveTop(int nIdx, int nTop)
 
 	double fZoom = (double)nTop / sItem.nTopHVal;
 
-	int nleftNewH = nTop - sItem.nTopHFrom;
-	int nrightNewH = nTop - sItem.nTopHTo;
+	int nleftNewH = nTop;// -sItem.nTopHFrom;
+	int nrightNewH = nTop;// -sItem.nTopHTo;
 
 // 	int nleftNewH = nTop - sItem.nTopHFrom < sItem.nTopHTo ? sItem.nTopHFrom : sItem.nTopHTo;
 // 	int nrightNewH = nTop - sItem.nTopHFrom < sItem.nTopHTo ? sItem.nTopHFrom : sItem.nTopHTo;
