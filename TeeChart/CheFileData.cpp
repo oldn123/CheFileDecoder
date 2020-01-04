@@ -241,12 +241,36 @@ bool CCheFileData::SaveFile(LPCTSTR sFile)
 		
 		*(int*)&m_sCheData.unKownBytes_18[6] = m_sCheData.nDataCnt;
 		fwrite(m_sCheData.unKownBytes_18, 1, 0x18, fp);
-		fwrite(&m_sCheData.wNameLen, 1, 0x02, fp);
-		if (m_sCheData.wNameLen > 0)
+
+
+		if (*(DWORD*)&m_sCheData.unKownBytes_18[0x14] != 0)
 		{
-			fwrite(&m_sCheData.sBuff, 1, m_sCheData.wNameLen, fp);
+			fwrite(&m_sCheData.sBuff[2], 1, 0x14, fp);
 		}
-		fwrite(m_sCheData.unKownBytes_14, 1, 0x14, fp);
+		else
+		{
+			fwrite(&m_sCheData.wNameLen, 1, 0x02, fp);
+			fwrite(m_sCheData.sBuff, 1, 0x0c, fp);
+		}
+
+
+// 		if (m_sCheData.wNameLen > 0)
+// 		{
+// 			fwrite(&m_sCheData.sBuff, 1, m_sCheData.wNameLen, fp);
+// 		}
+// 		fwrite(m_sCheData.unKownBytes_14, 1, 0x14, fp);
+
+
+		fwrite(&m_sCheData.unKownwLen, 1, 2, fp);
+		if (m_sCheData.unKownwLen > 0)
+		{
+			fwrite(m_sCheData.sUnkownBuff, 1, m_sCheData.unKownwLen, fp);
+
+			fwrite(&m_sCheData.dwUnkownByte4, 1, 4, fp);
+		}
+
+		fwrite(m_sCheData.unKownBytes_06, 1, 6, fp);
+
 
 		{
 			char sBuf[0x2C] = {0};
@@ -434,14 +458,39 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 		fread(m_sCheData.unKownBytes_18, 1, 0x18, fp);
 		assert(*(DWORD*)&m_sCheData.unKownBytes_18[0] == 0x1000c);	//0c 00 01 00
 		
-		fread(&m_sCheData.wNameLen, 1, 2, fp);
-		if (m_sCheData.wNameLen > 0)
+		if (*(DWORD*)&m_sCheData.unKownBytes_18[0x14] != 0)
 		{
-			memset(m_sCheData.sBuff, 0, 0x10);
-			fread(m_sCheData.sBuff, 1, m_sCheData.wNameLen, fp);
+			memset(m_sCheData.sBuff, 0, 0x20);
+			m_sCheData.wNameLen = *(WORD*)&m_sCheData.unKownBytes_18[0x14];
+			m_sCheData.sBuff[0] = m_sCheData.unKownBytes_18[0x16];
+			m_sCheData.sBuff[1] = m_sCheData.unKownBytes_18[0x17];
+			fread(&m_sCheData.sBuff[2], 1, 0x14, fp);
 		}
-		fread(m_sCheData.unKownBytes_14, 1, 0x14, fp);
-		assert(*(DWORD*)&m_sCheData.unKownBytes_14[0x10] == 0x10000e);	//0e 00 01 00
+		else
+		{
+			fread(&m_sCheData.wNameLen, 1, 2, fp);
+			//if (m_sCheData.wNameLen > 0)
+			{
+				memset(m_sCheData.sBuff, 0, 0x10);
+				fread(m_sCheData.sBuff, 1, /*m_sCheData.wNameLen*/0x0c, fp);
+			}
+			//fread(m_sCheData.unKownBytes_14, 1, 0x14, fp);
+		}
+	
+		fread(&m_sCheData.unKownwLen, 1, 2, fp);
+		if (m_sCheData.unKownwLen > 0)
+		{
+			memset(m_sCheData.sUnkownBuff, 0, 0x10);
+			fread(m_sCheData.sUnkownBuff, 1, m_sCheData.unKownwLen, fp);
+			
+			fread(&m_sCheData.dwUnkownByte4, 1, 4, fp);
+		}
+
+		fread(m_sCheData.unKownBytes_06, 1, 6, fp);
+		assert(*(DWORD*)&m_sCheData.unKownBytes_06[2] == 0x10000e);	//0e 00 01 00
+
+		//fread(m_sCheData.unKownBytes_14, 1, 0x14, fp);
+		//assert(*(DWORD*)&m_sCheData.unKownBytes_14[0x10] == 0x10000e);	//0e 00 01 00
 
 		{
 			char sBuf[0x2C] = {0};
@@ -579,7 +628,7 @@ bool CCheFileData::LoadFile(LPCTSTR sInput)
 		}
 
 		m_sCheData.nEndByesCnt = fread(m_sCheData.unKownBytes_end, 1, 0x100, fp);
-		assert(m_sCheData.nEndByesCnt > 0 && m_sCheData.nEndByesCnt < 0x100);
+		assert(m_sCheData.nEndByesCnt > 0 && m_sCheData.nEndByesCnt <= 0x100);
 
 	} while (false);
 
@@ -2083,7 +2132,14 @@ void CCheFileData::Clear()
 	m_sCheData.verMainDatas.clear();
 	memset(&m_sCheData.unKownBytes_0a[0], 0, 0x0a);
 	memset(&m_sCheData.unKownBytes_18[0], 0, 0x18);
-	memset(&m_sCheData.unKownBytes_14[0], 0, 0x14);
+
+	memset(m_sCheData.sBuff, 0, sizeof(m_sCheData.sBuff));
+	m_sCheData.unKownwLen = 0;
+	memset(m_sCheData.sUnkownBuff, 0, 0x10);
+	m_sCheData.dwUnkownByte4 = 0;
+	memset(m_sCheData.unKownBytes_06, 0, 0x06);
+
+	//memset(&m_sCheData.unKownBytes_14[0], 0, 0x14);
 	m_sCheData.wNameLen = 0;
 	m_sCheData.nDataCnt2 = (int*)&m_sCheData.unKownBytes_18[6];
 	m_sCheData.dtOle1 = 0;

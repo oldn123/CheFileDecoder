@@ -90,8 +90,14 @@ struct sCheData
 	/****/	
 	BYTE unKownBytes_18[0x18];
 	WORD wNameLen;
-	char sBuff[0x10];
-	BYTE unKownBytes_14[0x14];
+	char sBuff[0x20];
+
+	WORD unKownwLen;
+	char sUnkownBuff[0x10];
+	DWORD dwUnkownByte4;
+	BYTE unKownBytes_06[0x06];
+
+//	BYTE unKownBytes_14[0x14];
 	/****/
 	DATE dtOle1;
 	DATE dtOle2;
